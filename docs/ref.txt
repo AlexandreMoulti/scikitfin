@@ -1,2 +1,6 @@
 https://web.mst.edu/bohner/fim-10/fim-chap6.pdf
+https://www.institutdesactuaires.com/global/gene/link.php?news_link=2018162907_document-d-orientation-gse-institut-des-actuaires-nov-2018-002.pdf&fg=1
 
+https://github.com/lballabio/QuantLib/blob/master/ql/models/shortrate/twofactormodels/g2.cpp
+
+https://github.com/scikit-learn-contrib/MAPIE/blob/master/mapie/time_series_regression.py
