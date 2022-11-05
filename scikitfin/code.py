@@ -1,14 +1,10 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Sep 19 10:57:03 2022
-@author: Alexandre Moulti
-"""
 import numpy as np
 import pandas as pd
 from scipy import interpolate
 import matplotlib.pyplot as plt
 from typing import Literal, Union, List, Any
-from numpy.typing import ArrayLike, NDArray
+from numpy.typing import ArrayLike
+from math import *
 
 ###############################################################################
 #
@@ -22,69 +18,99 @@ class IRCurve(object):
     def __init__(self,
                  maturities : ArrayLike, 
                  data : ArrayLike, 
-                 method : Literal['ZeroCoupon', 'Swap','ActuarialRate', 'Yield']
+                 method : Literal['ZeroCoupon', 'Swap','ActuarialRate', 'Yield'] = 'ZeroCoupon'
                 ) -> None:
         """
-        Constructor function
-        Args:
-            maturities (ArrayLike): list of maturities
-            data (ArrayLike): list of value corresponding to a specific rate curve
-            method (Literal[&#39;ZeroCoupon&#39;, &#39;Swap&#39;,&#39;ActuarialRate&#39;, &#39;Yield&#39;]): type of the curve
+        Constructor
+
+        Parameters
+        ----------
+        maturities : ArrayLike
+            maturities of the curve.
+        data : ArrayLike
+            values of the curve.
+        method : Literal['ZeroCoupon', 'Swap','ActuarialRate', 'Yield']
+            method of description of the curve.
         """
         self.maturities : np.ndarray      = np.array(maturities) #dimension n
-        if method=='ZeroCoupon':
+        if method == 'ZeroCoupon':
             self.zc_prices : np.ndarray   = np.array(data)  # dimension n
-        elif method=='Swap':
-            self.zc_prices  = self.swap_rates_to_zero_coupon(maturities, data)
-        elif method=='ActuarialRate':
-            self.zc_prices = self.actuarial_rate_to_zero_coupon(maturities, data)
-        elif method=='Yield':
-            self.zc_prices  = self.yield_to_zero_coupon(maturities, data)
-        self.instant_forwards : np.ndarray = self.compute_instant_forwards(self.maturities, self.zc_prices) #dimension n-1
-
-    def interpolate_instant_forwards(self, 
-                                    new_maturities: ArrayLike
-                                    ) -> np.ndarray:
-        """
-            function that permit to interpolate instantaneous forward curve 
-        Args:
-            new_maturities (ArrayLike): List of new maturities to be interpolated 
-        Returns:
-            np.ndarray: new instantaneous forward curve with new maturities
-        """
+        elif method == 'Swap':
+            self.zc_prices  = self.swap_rates_to_zc_prices(maturities, data)
+        elif method == 'ActuarialRate':
+            self.zc_prices = self.actuarial_rates_to_zc_prices(maturities, data)
+        elif method == 'Yield':
+            self.zc_prices  = self.yields_to_zc_prices(maturities, data)
+        self.instant_forwards : np.ndarray = self.zc_prices_to_inst_forwards(self.maturities, self.zc_prices) #dimension n-1
+       
+    @property
+    def func_instant_forwards(self):
         if self.maturities[0]!=0:
-            maturities = np.concatenate(([0],self.maturities))
+            maturities = np.concatenate(([0], self.maturities))
         else:
             maturities = self.maturities
-        interpol = interpolate.interp1d( maturities[:-1], self.instant_forwards, kind='nearest', 
-                                         bounds_error=False, fill_value=(self.instant_forwards[0], self.instant_forwards[-1]) )
-        return interpol(new_maturities)
+        dt = np.diff(maturities) 
+        return interpolate.interp1d( maturities[:-1], self.instant_forwards, kind='nearest', 
+                                                      bounds_error=False, fill_value=(self.instant_forwards[0], self.instant_forwards[-1]) )
+    @property
+    def func_integ_forwards(self):
+        if self.maturities[0]!=0:
+            maturities = np.concatenate(([0], self.maturities))
+        else:
+            maturities = self.maturities
+        dt = np.diff(maturities) 
+        return interpolate.interp1d( maturities, np.concatenate(([0], np.cumsum(self.instant_forwards*dt))), kind='linear',
+                                                    fill_value='extrapolate')
+    @property
+    def func_spot_zc(self):
+        if self.maturities[0]!=0:
+            maturities = np.concatenate(([0], self.maturities))
+        else:
+            maturities = self.maturities
+        dt = np.diff(maturities)
+        return lambda t:np.exp(-self.func_integ_forwards(t))
 
     @staticmethod
-    def compute_zc_prices(maturities : ArrayLike, 
-                          instant_forwards : ArrayLike
-                         ) -> np.ndarray:
+    def inst_forwards_to_zc_prices(maturities : ArrayLike, 
+                                   instant_forwards : ArrayLike
+                                  ) -> np.ndarray:
         """
-            function that compute zero coupon prices from instantaneous forward curve 
-        Args:
-            maturities (ArrayLike): List of new maturities to be interpolated 
-            instant_forwards (ArrayLike): instantaneous forward curve
-        Returns:
-            np.ndarray: zc prices 
+        Computes zero-coupon prices from the instantaneous forwards
+
+        Parameters
+        ----------
+        maturities : ArrayLike
+            maturities of the curve.
+        instant_forwards : ArrayLike
+            instantaneous forwards.
+
+        Returns
+        -------
+        np.ndarray
+            zero-coupon pricies.
+
         """
         return np.exp(-np.cumsum(instant_forwards*np.diff(maturities)))
     
     @staticmethod
-    def compute_instant_forwards(maturities: ArrayLike, 
-                                  zc_prices : ArrayLike
-                                 ) -> np.ndarray:
+    def zc_prices_to_inst_forwards(maturities: ArrayLike, 
+                                   zc_prices : ArrayLike
+                                  ) -> np.ndarray:
         """
-        function that compute instantaneous forward curve from zc prices
-        Args:
-            maturities (ArrayLike): list of maturities
-            zc_prices (ArrayLike): zero coupon prices
-        Returns:
-            np.ndarray: instantneous forward curve
+        Computes the instantaneous forwards from the zero-coupon prices
+        
+        Parameters
+        ----------
+        maturities : ArrayLike
+            maturities of the curve.
+        zc_prices : ArrayLike
+            zero-coupon prices.
+
+        Returns
+        -------
+        np.ndarray
+            instantaneous forwards.
+
         """
         if maturities[0]!=0 :
             maturities = np.concatenate(([0], maturities))
@@ -92,44 +118,94 @@ class IRCurve(object):
         return np.diff(-np.log(zc_prices))/np.diff(maturities)
     
     @staticmethod
-    def zero_coupon_to_yield(maturities : ArrayLike,
-                               zc_prices: ArrayLike
+    def zc_prices_to_yields(maturities : ArrayLike,
+                            zc_prices: ArrayLike
                             ) -> np.ndarray:
         """
-        function that compute yield  curve from zero coupon prices 
-        Args:
-            maturities (ArrayLike): list of maturities
-            zc_prices (ArrayLike): zero coupon prices
-        Returns:
-            np.ndarray: yield curve 
+        Computes the yield curve from the zero-coupon price curve
+        $zerocoupon = e^{-yield * maturity}$
+
+        Parameters
+        ----------
+        maturities : ArrayLike
+            maturities of the curve.
+        zc_prices : ArrayLike
+            zero-coupon prices.
+
+        Yields
+        ------
+        np.ndarray
+            yield curve.
+
         """
         return -np.log(zc_prices)/maturities
     
     @staticmethod
-    def yield_to_zero_coupon(maturities: ArrayLike,
-                             yields : ArrayLike
-                             ) -> np.ndarray:
+    def yields_to_zc_prices(maturities: ArrayLike,
+                            yields : ArrayLike
+                           ) -> np.ndarray:
         """
-            function that compute zero coupon prices from yield curve 
-        Args:
-            maturities (ArrayLike): list of maturities
-            yields (ArrayLike): yield curve 
-        Returns:
-            np.ndarray: zero coupon curve 
+        Computes the zero-coupon prices from the yield curve
+
+        Parameters
+        ----------
+        maturities : ArrayLike
+            maturities of the curve.
+        yields : ArrayLike
+            yields of the curve.
+
+        Yields
+        ------
+        np.ndarray
+            yield curve.
+
         """
         return np.exp(-np.array(maturities) * yields)
     
     @staticmethod
-    def swap_rates_to_zero_coupon(maturities : ArrayLike, 
-                                  swap_rates : ArrayLike
-                                  )-> np.ndarray:
+    def zc_prices_to_swap_rates(maturities : ArrayLike, 
+                                 zc_prices : ArrayLike
+                                ) -> np.ndarray:
         """
-        function that compute zero coupon prices from swap rate curve 
-        Args:
-            maturities (ArrayLike): list of maturities
-            swap_rates (ArrayLike):  swap rate curve 
-        Returns:
-            np.ndarray:    zero coupon prices
+        Computes the zero-coupon curve from the swap rate curve
+
+        Parameters
+        ----------
+        maturities : ArrayLike
+            maturities of the curve.
+        zc_prices : ArrayLike
+            swap rates of the curve.
+
+        Returns
+        -------
+        np.ndarray
+            swap rate curve.
+
+        """
+        if maturities[0] != 0:
+            maturities = np.concatenate(([0],maturities))
+        dt = np.diff(maturities)
+        return (1-zc_prices)/(dt*zc_prices).cumsum()
+   
+    @staticmethod
+    def swap_rates_to_zc_prices(maturities : ArrayLike, 
+                                  swap_rates : ArrayLike
+                                )-> np.ndarray:
+        """
+        Computes the zero-coupon curve from the swap rate curve
+
+        Parameters
+        ----------
+        maturities : ArrayLike
+            maturities of the curve.
+        swap_rates : ArrayLike
+            swap rates of the curve.
+
+        Returns
+        -------
+        np.ndarray
+            zero-coupon curve.
+
         """
         zc = [1/((1+swap_rates[0])** maturities[0])]
         dt = np.diff(maturities)
@@ -138,53 +214,127 @@ class IRCurve(object):
             zc.append(zc_temp)
         return np.array(zc)
     
-
     @staticmethod
-    def actuarial_rate_to_zero_coupon(maturities : ArrayLike, 
+    def actuarial_rates_to_zc_prices(maturities : ArrayLike, 
                                       actuarial_rates : ArrayLike
-                                      ) -> np.ndarray:
+                                     ) -> np.ndarray:
         """
-            function that compute zero coupon prices from actuarials rate curve 
-        Args:
-            maturities (ArrayLike): list of maturities
-            actuarial_rates (ArrayLike): actuarial rates curve
-        Returns:
-            np.ndarray: zero coupon prices
+        Computes the zero-coupon curve from the actuarial rate curve
+
+        Parameters
+        ----------
+        maturities : ArrayLike
+            maturities of the curve.
+        actuarial_rates : ArrayLike
+            actuarial rates.
+
+        Returns
+        -------
+        np.ndarray
+            zero-coupon prices of the curve.
+
         """
         return np.power(1/(1+np.array(actuarial_rates)), maturities)
-    
 
+    @staticmethod
+    def zc_prices_to_acturial_rates( maturities : ArrayLike, 
+                                     actuarial_rates : ArrayLike
+                                   ) -> np.ndarray:
+        """
+        Computes the zero-coupon curve from the actuarial rate curve
+
+        Parameters
+        ----------
+        maturities : ArrayLike
+            maturities of the curve.
+        actuarial_rates : ArrayLike
+            actuarial rates.
+
+        Returns
+        -------
+        np.ndarray
+            zero-coupon prices of the curve.
+
+        """
+        pass
+    
     @classmethod
     def data_to_curve(cls, 
                       data_file_path : str,
                       method : Literal['ZeroCoupon', 'Swap','ActuarialRate', 'Yield'] 
                       ) -> Any:
         """
-        Create IRCurve object from csv file (that contains Maturities and a specific rate)
-        Args:
-            data_file_path (str): name of data file 
-            method (Literal[&#39;ZeroCoupon&#39;, &#39;Swap&#39;,&#39;ActuarialRate&#39;, &#39;Yield&#39;]): type of rate
-        Returns:
-            Any: IRCurve Object
+        Alternative constructor from tabular data
+
+        Parameters
+        ----------
+        data_file_path : str
+            path of the file.
+        method : Literal['ZeroCoupon', 'Swap','ActuarialRate', 'Yield']
+            method of description of the curve.
+
+        Returns
+        -------
+        Any
+            Curve.
+
         """
-        
         pd_curve   = pd.read_csv(data_file_path)
         maturities = pd_curve.iloc[:,0].to_numpy()
         data       = pd_curve.iloc[:,1].to_numpy()
         return IRCurve(maturities,data,method)
     
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        Returns the description of the curve
+
+        Returns
+        -------
+        str
+            description of the curve.
+
+        """
         return 'maturities -> {} \nzc_prices -> {} \ninstant_forward -> {}'.format(self.maturities, self.zc_prices, self.instant_forwards)
 
-    def plot(self):
-        plt.plot(self.maturities, self.zc_prices)
-        plt.show()
+    def plot(self,
+             method : Literal['ZeroCoupon', 'Swap','ActuarialRate', 'Yield'] = 'Yield'
+            ) -> Any:
+        """
+        Plots the curve
+
+        Parameters
+        ----------
+        method : Literal['ZeroCoupon', 'Swap','ActuarialRate', 'Yield']
+            method of description of the curve.
+
+        Returns
+        -------
+        Any
+            plot of the curve.
+
+        """
+        
+        if method == 'Swap':
+            values = self.zc_prices_to_swap_rates(self.maturities, self.zc_prices)
+        elif method == 'ActuraialRate':
+            values = self.zc_prices_to_acturial_rates(self.maturities, self.zc_prices)
+        elif method == 'Yield':
+            values = self.zc_prices_to_yields(self.maturities, self.zc_prices)
+        else:
+            values=self.zc_prices
+        return plt.plot(self.maturities, values)
+
+
 
 class swaptions_cube(object):
     """ representation of a swaption cube
     """
     
     def __init__(self):
+        # dictionary tau, mat -> normal vol
+        # alternative constructors
+        # dictionary tau, mat -> prices
+        # forward prices
         pass
 
 ###############################################################################
@@ -216,15 +366,46 @@ class DiscretisationGrid(object):
 #
 ###############################################################################
 
-class G1FConst(object):
-    """ Gaussian 1 factor modelling interest rates with constant parameters
-    """
+class IRGauss1FConst(object):
     
-    def __init__(self, kappa1, sigma1, kappa2, sigma2):
-        pass
+    def __init__(self, kappa, sigma, func_instant_forwards=lambda x:0):
+        """
+        
+
+        Parameters
+        ----------
+        kappa : TYPE
+            DESCRIPTION.
+        sigma : TYPE
+            DESCRIPTION.
+        func_instant_forwards : TYPE, optional
+            DESCRIPTION. The default is lambda x:0.
+
+        Returns
+        -------
+        None.
+
+        """
+        self.kappa  = kappa
+        self.sigma  = sigma
+        self.func_instant_forwards = self.func_instant_fowards
+
+    @np.vectorize
+    def G(self, tau):
+        if tau<1e-6:
+            return tau
+        else:
+            return (1-np.exp(-self.kappa*tau))/self.kappa
     
-    def zc_price(self):
-        pass
+    def variance(self, t):
+        return 0.5*self.sigma**2*self.G(2*t)
+    
+    def mean(self, t):
+        return 0.5*self.sigma**2*self.G(t)**2
+    
+    def zc_price(self, t, T, x):
+        return np.exp(-x*self.G(T-t)-0.5*self.variance(t)*self.G(t,T)**2)
+
     
     def caplet_price(self):
         pass
@@ -235,37 +416,44 @@ class G1FConst(object):
     def swaption_price(self):
         pass
     
-    def fit(self, ircurve, swaption_data):
+    def fit(self, ircurve, swaptiondata):
+        #calibrates kappa sigma to the data
         pass
     
-    def simulate(self):
-        pass
+    def simulate(self, grid, dN):
+        """
+        
+
+        Parameters
+        ----------
+        grid : TYPE
+            DESCRIPTION.
+        dN : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        TYPE
+            DESCRIPTION.
+
+        """
+        dt               = grid.dt
+        simulations      = np.ndarray(grid.shape)
+        simulations[:,0] = self.init
+        for j in range(1, self.simulations.shape[1]):
+            simulations[:,j] = simulations[:,j-1]*exp(-dt*self.kappa) + \
+                               self.mean(dt) + \
+                               np.sqrt(self.variance(dt))*dN[:,j]
+        return simulations+self.func_instant_forwards(grid.time_grid)
+    
 
 ###############################################################################
 #
 # CODE
 #
 ###############################################################################
-#path = '/Users/angeromualdossohou/Documents/swap.csv'
 
-#curve = IRCurve.data_to_curve(path, 'Swap')
-#print(curve.zc_prices)
-# maturities = np.array([0,0.5,1,2,3])
-# zc_prices  = np.array([1,0.99,0.9,0.8,0.7])
-# int_forwards = -np.log(zc_prices)
-# instant_forwards = (int_forwards[1:]-int_forwards[:-1])/ (maturities[1:]-maturities[:-1])
-# np.exp(-np.cumsum(instant_forwards*np.diff(maturities)))
-       
-
-
-# interpol = interpolate.interp1d(maturities[:-1], instant_forwards, kind='nearest', bounds_error=False, fill_value=(instant_forwards[0], instant_forwards[-1]) )
-# new_mat=np.linspace(0,10,20+1)
-# interpol(new_mat)
-
-myc= IRCurve([1,2,3,4,5,6], [0.02616,0.03056,0.03121,0.03128,0.03133,0.03129],'Swap')
-myc= IRCurve([1,2,3,4,5,6], [0.02]*6,'Swap')
+myc= IRCurve([0.5, 1,2,3,4,5,6], [0.210, 0.03,0.0288,0.0292,0.0295,0.0298,0.03],'Swap')
 print(myc)
-print(myc.interpolate_instant_forwards(np.linspace(0,10,20+1)))
+print(myc.func_instant_forwards(np.linspace(0,10,20+1)))
 myc.plot()
-
-#myc.get_new_instant_forwards(np.linspace(0,10,20+1))
