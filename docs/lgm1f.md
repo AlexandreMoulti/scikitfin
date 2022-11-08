@@ -9,7 +9,7 @@ $$ G(t,T) = \int_t^T exp(-\int_t^u \kappa_s ds) du $$
 
 $$ P(t,T) = \frac{P(0,T)}{P(0,t)} exp(-x_t G(t,T)-0.5 y_t G(t,T)^2 ) $$
 
-# 1 constant case
+## 1 constant case
 $ \kappa_t = \kappa $
 
 $$ G(t,T)= \int_t^T exp(-\kappa (u-t)) du = \frac{1-exp(-\kappa (T-t))}{\kappa} $$
@@ -24,3 +24,15 @@ $$ x_t = e^{-\kappa t} x_0+
          \frac{\sigma^2}{2\kappa^2}(1-e^{-kt})^2 +
          \sigma \sqrt{\frac{1-e^{-2kt}}{2\kappa}}\epsilon
 $$
+
+## zero coupon price
+
+## options on zero-coupons bonds
+
+## cap/floors
+
+## swaptions
+
+## Annex 1: recall of the HJM
+## Annex 2: Change of measure
+## Annex 3: etc
