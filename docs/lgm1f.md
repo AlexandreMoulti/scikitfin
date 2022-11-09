@@ -2,8 +2,7 @@
 
 ## definition
 Let's define the short term as :
-
-$$ r_t = x_t + f(0,t) $$
+$$r_t = x_t + f(0,t)$$
 
 with x_t the stochastic compenent and f(0,t) the deterministic compenent enabling the fit to the zero-coupon spot curve
 
