@@ -8,10 +8,12 @@ $$ r_t = x_t + f(0,t) $$
 with x_t the stochastic compenent and f(0,t) the deterministic compenent enabling the fit to the zero-coupon spot curve
 
 Following the HJM constraint, the dynamic is given by :
+
 $$ dx_t = (y_t - \kappa_t x_t) dt + \sigma_r dW_t $$
 $$ y_t = \int_0^t exp(-2 \int_u^t \kappa_s ds) \sigma_u^2 du $$
 
 zero coupon prices
+
 $$ G(t,T) = \int_t^T exp(-\int_t^u \kappa_s ds) du $$
 $$ P(t,T) = \frac{P(0,T)}{P(0,t)} exp(-x_t G(t,T)-0.5 y_t G(t,T)^2 ) $$
 
