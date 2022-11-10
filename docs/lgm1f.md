@@ -40,5 +40,8 @@ $$x_t = e^{-\kappa t} x_0+
          \sigma \sqrt{\frac{1-e^{-2kt}}{2\kappa}}\epsilon$$
 
 ## Annex 1: recall of the HJM
+
+$$ df(t,T)=\sigma_f(t,T) (int_t^T \sigma_f(t,u)du)dt+\sigma_f(t,T)dWt $$
+$$ \sigma_f(t,T)= \sigma_r(t) exp(-\int_t^T \kappa_u du)$$
 ## Annex 2: Change of measure
 ## Annex 3: etc
