@@ -31,7 +31,7 @@ Then the price is given by
 $$V_t = P(t,T+\tau)\Phi(d_+)-P(t,T)K\Phi(d_-) $$
 
 with 
-$$ d_{+-}=\frac{ln[P]+-v/2}{\sqrt v}$$
+$$ d_{+-}=\frac{ln(\frac{P(t,T+\tau)}{KP(t,T)}) +- v/2}{\sqrt v}$$
 $$ v = \int_t^T (\sigma_p(u,T+\tau)-\sigma_p(u,T))^2 du$$
 
 
