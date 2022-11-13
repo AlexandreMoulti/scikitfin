@@ -12,9 +12,13 @@ $$y_t = \int_0^t exp(-2 \int_u^t \kappa_s ds) \sigma_u^2 du$$
 
 ## zero coupon prices
 
+We recall the definition of the zero-coupon prices
+$$P(t,T) = e^{\int_t^T f_u du} $$
+
+We get the following expression of the zero-coupon price as a function of the state variable x_t
+$$P(t,T) = \frac{P(0,T)}{P(0,t)} exp(-x_t G(t,T)-0.5 y_t G(t,T)^2 )$$
 $$G(t,T) = \int_t^T exp(-\int_t^u \kappa_s ds) du$$
 
-$$P(t,T) = \frac{P(0,T)}{P(0,t)} exp(-x_t G(t,T)-0.5 y_t G(t,T)^2 )$$
 
 ## options on zero-coupons bonds
 Let's define $sigma_p$ the instantaneous volatility of the zero-coupon bond
