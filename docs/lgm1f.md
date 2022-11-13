@@ -1,17 +1,17 @@
 # LGM1F
 
 ## definition
-Let's define the short term as :
-$$r_t = x_t + f(0,t)$$
+Let's assume the short term instantaneous rate follows the following equation:
+$$dr_t = ... dt - \kappa_t r_t dt + \sigma_r dW_t $$
 
-with x_t the stochastic compenent and f(0,t) the deterministic compenent enabling the fit to the zero-coupon spot curve
+Now we can decompose this process into a state variable x_t and a deterministic component enabling the fin to zero-coupon spot curve
+$$r_t = x_t + f(0,t)$$
 
 Following the HJM constraint, the dynamic is given by :
 $$dx_t = (y_t - \kappa_t x_t) dt + \sigma_r dW_t$$
 $$y_t = \int_0^t exp(-2 \int_u^t \kappa_s ds) \sigma_u^2 du$$
 
 ## zero coupon prices
-
 We recall the definition of the zero-coupon prices
 $$P(t,T) = e^{\int_t^T f_u du}$$
 
