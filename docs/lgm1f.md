@@ -24,7 +24,8 @@ $$\sigma_p(t,T) = \sigma_r(t) G(t,T)$$
 $$G(t,T)=(G(0,T)-G(0,t))e^{\int_0^t \kappa_u du}$$
 
 ## options on zero-coupons bonds
-Let's define $sigma_p$ the instantaneous volatility of the zero-coupon bond
+Consider a european call option on a zero-coupon bond, paying at maturty T an amount
+$$ V_T = (P(T,T\tau)-K)^+ $$
 
 
 ## cap/floors
