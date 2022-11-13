@@ -20,7 +20,7 @@ $$P(t,T) = \frac{P(0,T)}{P(0,t)} exp(-x_t G(t,T)-0.5 y_t G(t,T)^2 )$$
 $$G(t,T) = \int_t^T exp(-\int_t^u \kappa_s ds) du$$
 
 remark
-$$\sigma_p(t,T) = \sigma_r(t) G(t,T)$$
+$$ \sigma_p(t,T) = \sigma_r(t) G(t,T)$$
 $$G(t,T)=(G(0,T)-G(0,t))e^{\int_0^^t \kappa_u du}$$
 
 ## options on zero-coupons bonds
