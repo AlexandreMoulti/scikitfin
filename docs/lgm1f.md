@@ -25,7 +25,14 @@ $$G(t,T)=(G(0,T)-G(0,t))e^{\int_0^t \kappa_u du}$$
 
 ## options on zero-coupons bonds
 Consider a european call option on a zero-coupon bond, paying at maturty T an amount
-$$ V_T = (P(T,T\tau)-K)^+ $$
+$$V_T = (P(T,T\tau)-K)^+ $$
+
+Then the price is given by
+$$V_t = P(t,T+\tau)\Phi(d_+)-P(t,T)K\Phi(d_-) $$
+
+with 
+$$ d_{+-}=\frac{ln[P]+-v/2}{\sqrt v}$$
+$$ v = \int_t^T (\sigma_p(u,T+\tau)-\sigma_p(u,T))^2 du$$
 
 
 ## cap/floors
