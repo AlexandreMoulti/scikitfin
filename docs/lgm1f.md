@@ -43,7 +43,7 @@ Consider a swaption of expiry $T_0$ paying a coupon c at maturities $T_1,..,T_N$
 $$V(T_0)=(1-P(T_0,T_1)-c \sum_{i=0}^{N-1}{\tau_i P(T_0,T_i)})^+$$
 
 Let's define Jamishidian strikes as $K_i=P(T_0, T_i, x*)$ where
-$$1 = P(T_0,T_N,x^*) + c \sum_0^{N-1}{\tau_i P(T_0,T_{i+1},x*)}$$
+$$1 = P(T_0,T_N,x*) + c \sum_0^{N-1}{\tau_i P(T_0,T_{i+1},x*)}$$
 
 Then the Jamishidian trick gives us the following formula :
 $$V(T_0) = (K_N - P(T_0,T_N,x_T_0))^+
