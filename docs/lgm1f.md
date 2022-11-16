@@ -39,6 +39,10 @@ $$v = \int_t^T (\sigma_p(u,T+\tau)-\sigma_p(u,T))^2 du$$
 
 ## swaptions
 
+Consider a swaption of expiry $T_0$ paying a coupon c at maturities $T_1,..,T_N$
+The value at expiry $T_0$ is the following
+$$V(T_0)=(1-P(T_0,T_1)-c \sum_{i=0}^{N-1}{\tau_i P(T_0,T_i)})^+  $$
+
 # Application to the constant case constant case
 $\kappa_t = \kappa$
 
