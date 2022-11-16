@@ -47,7 +47,7 @@ $$1 = P(T_0,T_N,x*) + c \sum_0^{N-1}{\tau_i P(T_0,T_{i+1},x*)}$$
 
 Then the Jamishidian trick gives us the following formula :
 $$V(T_0) = (K_N - P(T_0,T_N,x_T_0))^+
-         + c \sum_0^{N-1} \tau_i (K_i-P(T_0,T_i,x_T_0))^+$$
+         + c \sum_0^N \tau_i (K_i-P(T_0,T_i,x_T_0))^+$$
          
 # Application to the constant case constant case
 $\kappa_t = \kappa$
