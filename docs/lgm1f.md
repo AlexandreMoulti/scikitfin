@@ -27,13 +27,15 @@ $$G(t,T)=(G(0,T)-G(0,t))e^{\int_0^t \kappa_u du}$$
 Consider a european call option on a zero-coupon bond, paying at maturty T an amount
 $$V_T = (P(T,T\tau)-K)^+ $$
 
-Then the price is given by
+Then the price of the call is given by
 $$V_t = P(t,T+\tau)\Phi(d_+)-P(t,T)K\Phi(d_-) $$
 
 with 
 $$d_{+-}=\frac{ln(\frac{P(t,T+\tau)}{KP(t,T)}) +- v/2}{\sqrt v}$$
 $$v = \int_t^T (\sigma_p(u,T+\tau)-\sigma_p(u,T))^2 du$$
 
+Remark : The price of a put option is given by
+$$P(t,T)K\Phi(-d_-) - P(t,T+\tau)\Phi(-d_+) $$
 
 ## cap/floors
 
