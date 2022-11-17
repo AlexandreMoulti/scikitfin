@@ -52,7 +52,7 @@ Then the Jamishidian trick gives us the following formula :
 $$V(T_0) = (K_N - P(T_0,T_N,x_{T_0}))^+ + c \sum_0^N \tau_i (K_i-P(T_0,T_i,x_{T_0}))^+$$
 
 ### Swaptions: approximate formula for fast calibration
-         
+
 # Application to the constant case
 
 In this section, we will consider the constant case where all parameters are fixed with respect to the time.
@@ -63,8 +63,8 @@ $$G(t,T)= \int_t^T \exp(-\kappa (u-t)) du = \frac{1-exp(-\kappa (T-t))}{\kappa}=
 
 $$y_t = \frac{\sigma^2}{2\kappa} (1-exp(-2\kappa t))$$
 
-For pricing of swaptions, we need to express the quantity v
-$$v(t,T) = \int_t^T (\sigma_p(u,T+\tau)-\sigma_p(u,T))^2 du
+For pricing of swaptions, we need to express the quantity v: 
+$$v(t,T) = \int_t^T (\sigma_p(u,T+\tau)-\sigma_p(u,T))^2 du \\
          = \sigma^2 G(T)^2 \frac{G(2(T-t))}{2}$$
 
 
