@@ -64,7 +64,6 @@ $$G(t,T)= \int_t^T \exp(-\kappa (u-t)) du = \frac{1-exp(-\kappa (T-t))}{\kappa}=
 $$y_t = \frac{\sigma^2}{2\kappa} (1-exp(-2\kappa t))$$
 
 For pricing of swaptions, we need to express the quantity v:
-
 $$v(t,T) = \int_t^T (\sigma_p(u,T+\tau)-\sigma_p(u,T))^2 du
          = \sigma^2 G(T)^2 \frac{G(2(T-t))}{2}$$
 
