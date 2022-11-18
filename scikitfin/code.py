@@ -388,36 +388,42 @@ class IRGauss1FConst(object):
         """
         self.kappa  = kappa
         self.sigma  = sigma
-        self.func_instant_forwards = self.func_instant_fowards
+        self.func_instant_forwards = func_instant_fowards
 
-    @np.vectorize
+    #todo staticmethod
     def G(self, tau):
         if tau<1e-6:
             return tau
         else:
             return (1-np.exp(-self.kappa*tau))/self.kappa
-    
+        
+    #todo version staticmethod
     def variance(self, t):
         return 0.5*self.sigma**2*self.G(2*t)
     
+    #todo staticmethod
     def mean(self, t):
         return 0.5*self.sigma**2*self.G(t)**2
     
+    #todo staticmethod
     def zc_price(self, t, T, x):
         return np.exp(-x*self.G(T-t)-0.5*self.variance(t)*self.G(t,T)**2)
 
-    
-    def caplet_price(self):
+    #todo staticmethod
+    def zc_call(self):
         pass
-    
+
+    #todo staticmethod
     def cap_price(self):
         pass
     
+    #todo staticmethod
     def swaption_price(self):
         pass
     
     def fit(self, ircurve, swaptiondata):
         #calibrates kappa sigma to the data
+        #swaptiondata dictionary of implied vols expiry, tenor->vol
         pass
     
     def simulate(self, grid, dN):
