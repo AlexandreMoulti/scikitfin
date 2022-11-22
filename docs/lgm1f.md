@@ -41,15 +41,15 @@ $$P(t,T)K\Phi(-d_-) - P(t,T+\tau)\Phi(-d_+) $$
 
 ## Swaption
 
-Consider a swaption of expiry $T_0$ paying a coupon c at maturities $T_1,..,T_N$. The value at expiry $T_0$ is the following :
-$$V(T_0)=(1-P(T_0,T_N)-c \sum_{i=0}^{N-1}{\tau_i P(T_0,T_i)})^+$$
+Consider a swaption of expiry $T_0$ paying a coupon c at maturities $T_1,..,T_N$. By defining $\tau_i=T_i-T_{i-1}$ the value at expiry $T_0$ is the following :
+$$V(T_0)=(1-P(T_0,T_N) - c \sum_{i=1}^{N}{\tau_i P(T_0,T_i)})^+$$
 
 ### Swaptions 1: semi analytical formula
 Let's define Jamishidian strikes as $K_i=P(T_0, T_i, x*)$ where
-$$1 = P(T_0,T_N,x*) + c \sum_0^{N-1}{\tau_i P(T_0,T_{i+1},x*)}$$
+$$1 = P(T_0,T_N,x*) + c \sum_1^N {\tau_i P(T_0,T_{i},x*)}$$
 
 Then the Jamishidian trick gives us the following formula :
-$$V(T_0) = (K_N - P(T_0,T_N,x_{T_0}))^+ + c \sum_0^N \tau_i (K_i-P(T_0,T_i,x_{T_0}))^+$$
+$$V(T_0) = (K_N - P(T_0,T_N,x_{T_0}))^+ + c \sum_1^N \tau_i (K_i-P(T_0,T_i,x_{T_0}))^+$$
 
 ### Swaptions 2: approximate formula for fast calibration
 
