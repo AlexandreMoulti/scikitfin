@@ -393,6 +393,7 @@ class IRGauss1FConst(object):
         self.func_instant_forwards = func_instant_fowards
         self.func_spot_zc = func_spot_zc
 
+    @np.vectorize
     @staticmethod
     def G(tau, kappa, sigma):
         if tau<1e-6:
