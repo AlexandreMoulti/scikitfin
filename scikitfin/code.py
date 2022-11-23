@@ -394,25 +394,23 @@ class IRGauss1FConst(object):
         self.func_spot_zc = func_spot_zc
 
     @staticmethod
-    def G(tau, params):
-        kappa, sigma = params
+    def G(tau, kappa, sigma):
         if tau<1e-6:
             return tau
         else:
             return (1-np.exp(-kappa*tau))/kappa
     
     @staticmethod
-    def variance(t, params):
-        kappa, sigma = params
-        return 0.5*sigma**2*self.G(2*t, params)
+    def variance(t, kappa, sigma):
+        return 0.5*sigma**2*self.G(2*t, kappa, sigma)
     
     @staticmethod
-    def mean(t, params):
-        return 0.5*sigma**2*self.G(t, params)**2
+    def mean(t, kappa, sigma):
+        return 0.5*sigma**2*self.G(t, kappa, sigma)**2
     
     @staticmethod
     def price_zc(x, t, T, params):
-        return self.func_spot_zc(T)/self.func_spot_zc(t)*np.exp(-x*self.G(T-t, params)-0.5*self.variance(t, params)*self.G(T-t, params)**2)
+        return self.func_spot_zc(T)/self.func_spot_zc(t)*np.exp(-x*self.G(T-t, kappa, sigma)-0.5*self.variance(t, params)*self.G(T-t, kappa, sigma)**2)
 
     
     def fit(self, ircurve, swaptiondata):
