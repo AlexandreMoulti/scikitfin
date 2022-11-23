@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from typing import Literal, Union, List, Any
 from numpy.typing import ArrayLike
 from math import *
+from scipy.stats import norm
+from scipy import optimize
 
 ###############################################################################
 #
@@ -34,14 +36,14 @@ class IRCurve(object):
         """
         self.maturities : np.ndarray      = np.array(maturities) #dimension n
         if method == 'ZeroCoupon':
-            self.zc_prices : np.ndarray   = np.array(data)  # dimension n
+            self.price_zcs : np.ndarray   = np.array(data)  # dimension n
         elif method == 'Swap':
-            self.zc_prices  = self.swap_rates_to_zc_prices(maturities, data)
+            self.price_zcs  = self.swap_rates_to_zc_prices(maturities, data)
         elif method == 'ActuarialRate':
-            self.zc_prices = self.actuarial_rates_to_zc_prices(maturities, data)
+            self.price_zcs = self.actuarial_rates_to_zc_prices(maturities, data)
         elif method == 'Yield':
-            self.zc_prices  = self.yields_to_zc_prices(maturities, data)
-        self.instant_forwards : np.ndarray = self.zc_prices_to_inst_forwards(self.maturities, self.zc_prices) #dimension n-1
+            self.price_zcs  = self.yields_to_zc_prices(maturities, data)
+        self.instant_forwards : np.ndarray = self.zc_prices_to_inst_forwards(self.maturities, self.price_zcs) #dimension n-1
        
     @property
     def func_instant_forwards(self):
@@ -189,7 +191,7 @@ class IRCurve(object):
    
     @staticmethod
     def swap_rates_to_zc_prices(maturities : ArrayLike, 
-                                  swap_rates : ArrayLike
+                                swap_rates : ArrayLike
                                 )-> np.ndarray:
         """
         Computes the zero-coupon curve from the swap rate curve
@@ -294,7 +296,7 @@ class IRCurve(object):
             description of the curve.
 
         """
-        return 'maturities -> {} \nzc_prices -> {} \ninstant_forward -> {}'.format(self.maturities, self.zc_prices, self.instant_forwards)
+        return 'maturities -> {} \nzc_prices -> {} \ninstant_forward -> {}'.format(self.maturities, self.price_zcs, self.instant_forwards)
 
     def plot(self,
              method : Literal['ZeroCoupon', 'Swap','ActuarialRate', 'Yield'] = 'Yield'
@@ -315,13 +317,13 @@ class IRCurve(object):
         """
         
         if method == 'Swap':
-            values = self.zc_prices_to_swap_rates(self.maturities, self.zc_prices)
+            values = self.price_zcs_to_swap_rates(self.maturities, self.price_zcs)
         elif method == 'ActuraialRate':
-            values = self.zc_prices_to_acturial_rates(self.maturities, self.zc_prices)
+            values = self.price_zcs_to_acturial_rates(self.maturities, self.price_zcs)
         elif method == 'Yield':
-            values = self.zc_prices_to_yields(self.maturities, self.zc_prices)
+            values = self.zc_prices_to_yields(self.maturities, self.price_zcs)
         else:
-            values=self.zc_prices
+            values=self.price_zcs
         return plt.plot(self.maturities, values)
 
 
@@ -368,9 +370,9 @@ class DiscretisationGrid(object):
 
 class IRGauss1FConst(object):
     
-    def __init__(self, kappa, sigma, func_instant_forwards=lambda x:0):
+    def __init__(self, kappa, sigma, func_instant_forwards=lambda x:0, func_spot_zc=lambda x:1):
         """
-        
+        Interest Rates Gaussian 1 Factor model with constant parameters
 
         Parameters
         ----------
@@ -389,46 +391,60 @@ class IRGauss1FConst(object):
         self.kappa  = kappa
         self.sigma  = sigma
         self.func_instant_forwards = func_instant_fowards
+        self.func_spot_zc = func_spot_zc
 
-    #todo staticmethod
-    def G(self, tau):
+    @staticmethod
+    def G(tau, params):
+        kappa, sigma = params
         if tau<1e-6:
             return tau
         else:
-            return (1-np.exp(-self.kappa*tau))/self.kappa
-        
-    #todo version staticmethod
-    def variance(self, t):
-        return 0.5*self.sigma**2*self.G(2*t)
+            return (1-np.exp(-kappa*tau))/kappa
     
-    #todo staticmethod
-    def mean(self, t):
-        return 0.5*self.sigma**2*self.G(t)**2
+    @staticmethod
+    def variance(t, params):
+        kappa, sigma = params
+        return 0.5*sigma**2*self.G(2*t, params)
     
-    #todo staticmethod
-    def zc_price(self, t, T, x):
-        return np.exp(-x*self.G(T-t)-0.5*self.variance(t)*self.G(t,T)**2)
+    @staticmethod
+    def mean(t, params):
+        return 0.5*sigma**2*self.G(t, params)**2
+    
+    @staticmethod
+    def price_zc(x, t, T, params):
+        return self.func_spot_zc(T)/self.func_spot_zc(t)*np.exp(-x*self.G(T-t, params)-0.5*self.variance(t, params)*self.G(T-t, params)**2)
 
-    #todo staticmethod
-    def zc_call(self):
-        pass
-
-    #todo staticmethod
-    def cap_price(self):
-        pass
-    
-    #todo staticmethod
-    def swaption_price(self):
-        pass
     
     def fit(self, ircurve, swaptiondata):
         #calibrates kappa sigma to the data
-        #swaptiondata dictionary of implied vols expiry, tenor->vol
+        pass
+    
+    
+    @staticmethod
+    def price_zc_call(x:float, t:float, maturity:float, tenor:float, K:float, kappa, sigma) -> float:
+        """
+        p185
+
+        """
+        pass
+    
+    @staticmethod
+    def price_zc_put(x:float, t:float, maturity:float, tenor:float, K:float, kappa, sigma) -> float:
+        """
+        p185
+
+        """
+        pass
+
+    @staticmethod
+    def price_swaption(x, t, schedule, strike, kappa, sigma) -> float:
+        #p421
+        #schedule = (t0,t1,...,tN)
         pass
     
     def simulate(self, grid, dN):
         """
-        
+        Simulates Monte Carlo paths for the short rate $r_t$
 
         Parameters
         ----------
@@ -447,8 +463,8 @@ class IRGauss1FConst(object):
         simulations      = np.ndarray(grid.shape)
         simulations[:,0] = self.init
         for j in range(1, self.simulations.shape[1]):
-            simulations[:,j] = simulations[:,j-1]*exp(-dt*self.kappa) + \
-                               self.mean(dt) + \
+            simulations[:,j] = simulations[:,j-1]*exp(-dt*self.kappa) +\
+                               self.mean(dt) +\
                                np.sqrt(self.variance(dt))*dN[:,j]
         return simulations+self.func_instant_forwards(grid.time_grid)
     
@@ -459,7 +475,9 @@ class IRGauss1FConst(object):
 #
 ###############################################################################
 
+
 myc= IRCurve([0.5, 1,2,3,4,5,6], [0.210, 0.03,0.0288,0.0292,0.0295,0.0298,0.03],'Swap')
+#myc= IRCurve([0.5, 1,2,3,4,5,6], [0.02]*6,'Swap')
 print(myc)
 print(myc.func_instant_forwards(np.linspace(0,10,20+1)))
 myc.plot()
