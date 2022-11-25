@@ -13,7 +13,7 @@ $$VAR(x_t)=y_t = \int_0^t exp(-2 \int_u^t \kappa_s ds) \sigma_u^2 du$$
 
 ## Zero-Coupon prices
 We recall the definition of the zero-coupon prices
-$$P(t,T) = e^{\int_t^T f_u du}$$
+$$P(t,T) = e^{-\int_t^T f_u du}$$
 
 We get the following expression of the zero-coupon price as a function of the state variable x_t
 $$P(t,T) = \frac{P(0,T)}{P(0,t)} exp(-x_t G(t,T)-0.5 y_t G(t,T)^2 )$$
@@ -83,12 +83,28 @@ Let's consider a case where parameters are time depedent following a formula :
 
 $$\sigma_t =  \sigma_0 + \sigma_{\inf}$$
 
-_________
+____________________________________________________________________
+
 
 # Annex
 ## Annex 1: recall of the HJM
+The HJM framework focuses on describing the evolution of the whole T-indexed bond prices structures P(.,T), starting from an initial state T->P(0,T) , and depending on a finite number of brownian motions.
 
-$$ df(t,T)=\sigma_f(t,T) (int_t^T \sigma_f(t,u)du)dt+\sigma_f(t,T)dWt $$
+By writing the dynamic as following :
+$$ \frac{dP(t,T)}{P(t,T)} = r_t dt -sigma_B(t,T)dt$$
+
+By writing that B(t,t)=1 we get
+$$ B(t,T) = \frac{P(0,T)}{P(O,t)} e^{\int_0^t -\frac{1}{2}(\sigma_B(s,T)^2-\sigma_B(s,t)^2) - (\sigma_B(s,T)-\sigma_B(s,t)) dW_s}$$
+
+Using the instantenous forward definition, we get
+$$ f(t,T)= f(0,T)+\int_0^t \frac{\partial \sigma_B(s,T)}{\partial T} \sigma_B(s,T)  ds + \int_0^t \frac{\partial \sigma_B(s,T)}{\partial T} dW_s $$
+
+By defining $\sigma_f=\frac{\partial \sigma_B(s,T)}{\partial T}$ we get the HJM equation :
+
+$$ df(t,T) = \sigma_f(t,T) (int_t^T \sigma_f(t,u)du) dt + \sigma_f(t,T) dWt $$
+
+The short rate can now be written as follows :
+$$ r_t = f(t,t) = f(0,t) + \int_0^t \sigma_f(u,t) (\int_u^t \sigma_f(u,s)ds)du + \int_0^t \sigma_f(u,t)dW_u$$
 
 $$ \sigma_f(t,T)= \sigma_r(t) exp(-\int_t^T \kappa_u du)$$
 
