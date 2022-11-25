@@ -94,7 +94,7 @@ By writing the dynamic as following :
 $$\frac{dP(t,T)}{P(t,T)} = r_t dt -\sigma_B(t,T) dt$$
 
 By writing that B(t,t)=1 we get
-$$B(t,T) = \frac{P(0,T)}{P(O,t)} e^{\int_0^t -\frac{1}{2}(\sigma_B(s,T)^2-\sigma_B(s,t)^2) - (\sigma_B(s,T)-\sigma_B(s,t)) dW_s}$$
+$$P(t,T) = \frac{P(0,T)}{P(0,t)} e^{\int_0^t -\frac{1}{2}(\sigma_B(s,T)^2-\sigma_B(s,t)^2) - (\sigma_B(s,T)-\sigma_B(s,t)) dW_s}$$
 
 Using the instantenous forward definition, we get
 $$f(t,T)= f(0,T)+\int_0^t \frac{\partial \sigma_B(s,T)}{\partial T} \sigma_B(s,T)  ds + \int_0^t \frac{\partial \sigma_B(s,T)}{\partial T} dW_s $$
