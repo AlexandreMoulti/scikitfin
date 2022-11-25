@@ -91,7 +91,7 @@ ____________________________________________________________________
 The HJM framework focuses on describing the evolution of the whole T-indexed bond prices structures P(.,T), starting from an initial state T->P(0,T) , and depending on a finite number of brownian motions.
 
 By writing the dynamic as following :
-$$\frac{dP(t,T)}{P(t,T)} = r_t dt -sigma_B(t,T)dt$$
+$$\frac{dP(t,T)}{P(t,T)} = r_t dt -\sigma_B(t,T) dt$$
 
 By writing that B(t,t)=1 we get
 $$B(t,T) = \frac{P(0,T)}{P(O,t)} e^{\int_0^t -\frac{1}{2}(\sigma_B(s,T)^2-\sigma_B(s,t)^2) - (\sigma_B(s,T)-\sigma_B(s,t)) dW_s}$$
@@ -106,7 +106,7 @@ $$df(t,T) = \sigma_f(t,T) (int_t^T \sigma_f(t,u)du) dt + \sigma_f(t,T) dWt $$
 The short rate can now be written as follows :
 $$r_t = f(t,t) = f(0,t) + \int_0^t \sigma_f(u,t) (\int_u^t \sigma_f(u,s)ds)du + \int_0^t \sigma_f(u,t)dW_u$$
 
-$$ \sigma_f(t,T)= \sigma_r(t) exp(-\int_t^T \kappa_u du)$$
+$$\sigma_f(t,T)= \sigma_r(t) exp(-\int_t^T \kappa_u du)$$
 
 ## Annex 2: Change of measure
 ## Annex 3: etc
