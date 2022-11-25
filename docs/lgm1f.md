@@ -101,7 +101,9 @@ $$f(t,T)= f(0,T)+\int_0^t \frac{\partial \sigma_B(s,T)}{\partial T} \sigma_B(s,T
 
 By defining $\sigma_f=\frac{\partial \sigma_B(s,T)}{\partial T}$ we get the HJM equation :
 
-$$df(t,T) = \sigma_f(t,T) (int_t^T \sigma_f(t,u)du) dt + \sigma_f(t,T) dWt $$
+$$\begin{equation}
+df(t,T) = \sigma_f(t,T) (int_t^T \sigma_f(t,u)du) dt + \sigma_f(t,T) dWt 
+\end{equation}$$
 
 The short rate can now be written as follows :
 $$r_t = f(t,t) = f(0,t) + \int_0^t \sigma_f(u,t) (\int_u^t \sigma_f(u,s)ds)du + \int_0^t \sigma_f(u,t)dW_u$$
