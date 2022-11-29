@@ -78,11 +78,6 @@ $$x_t = e^{-\kappa t} x_0+
          \frac{\sigma^2}{2\kappa^2}(1-e^{-kt})^2 +
          \sigma \sqrt{\frac{1-e^{-2kt}}{2\kappa}}\epsilon$$
 
-# Parametrized case
-
-Let's consider a case where parameters are time depedent following a formula :
-
-$$\sigma_t =  \sigma_0 + \sigma_{\inf}$$
 
 ____________________________________________________________________
 
@@ -108,8 +103,6 @@ df(t,T) = \sigma_f(t,T) (\int_t^T \sigma_f(t,u)du) dt + \sigma_f(t,T) dWt
 
 The short rate can now be written as follows :
 $$r_t = f(t,t) = f(0,t) + \int_0^t \sigma_f(u,t) (\int_u^t \sigma_f(u,s)ds)du + \int_0^t \sigma_f(u,t)dW_u$$
-
-$$\sigma_f(t,T)= \sigma_r(t) exp(-\int_t^T \kappa_u du)$$
 
 ## Proof of the general LGM SDE
 If we define $x_t$ as $r_t = f(0,t)+x_t$, then it follows that
