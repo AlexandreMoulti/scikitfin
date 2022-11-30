@@ -16,7 +16,7 @@ $$Y(t,T) :=log(P(t,T)) = -\int_0^t f(u,T)du$$
 $$dY(t,T) = f(t,t) dt -\int_t^T df(t,u)du$$
 $$          = r_t dt - \int_t^T \mu(t,u) dt du - \int_t^T \sigma(t,u) dW_t du$$
 
-Defining $M(t,T) = \int_t^T M(t,u) du$ and $\Sigma(t,T) = \int_t^T \sigma(t,u) du$ we get
+Defining $M(t,T) = \int_t^T \mu(t,u) du$ and $\Sigma(t,T) = \int_t^T \sigma(t,u) du$ we get
 $$dY(t,T) = (r_t-M(t,T)) dt - \Sigma(t,T) dW_t$$
 
 The dynamic of the zero-coupon bonds becomes:
