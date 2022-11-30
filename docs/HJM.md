@@ -11,13 +11,13 @@ $$df(t,T)=\mu(t,T)dt+\sigma(t,T)dW_t$$
 Where $W_t$ is a d-dimensional Wiener process and $\mu, \sigma$ are F-adapted processes.
 
 We can now write the dynamic of the zero-coupon bond curves
-$$Y(t,T) :=log(P(t,T))=-\int_0^t f(u,T)du$$
+$$Y(t,T) :=log(P(t,T)) = -\int_0^t f(u,T)du$$
 
-$$dY(t,T) = f(t,t)dt-\int_t^T df(t,u)du
-          = r_t dt - \int_t^T \mu(t,u) dt du - \int_t^T \sigma(t,u) dW_t du$$
+$$dY(t,T) = f(t,t) dt -\int_t^T df(t,u)du$$
+$$          = r_t dt - \int_t^T \mu(t,u) dt du - \int_t^T \sigma(t,u) dW_t du$$
 
 Defining $\Mu(t,T) = \int_t^T \mu(t,u) du$ and $\Sigma(t,T) = \int_t^T \sigma(t,u) du$ we get
-$$dY(t,T) = (r_t-\Mu(t,T) dt - \Sigma(t,T) dW_t$$
+$$dY(t,T) = (r_t-\Mu(t,T)) dt - \Sigma(t,T) dW_t$$
 
 The dynamic of the zero-coupon bonds becomes:
 $$\frac{dP(t,T)}{P(t,T)} = (r_t - \Mu(t,T) + \frac{1}{2} \Sigma(t,T)\sigma(t,T)^T)dt - \Sigma(t,T) dW_t$$
