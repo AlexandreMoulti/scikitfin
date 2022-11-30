@@ -16,13 +16,13 @@ $$Y(t,T) :=log(P(t,T)) = -\int_0^t f(u,T)du$$
 $$dY(t,T) = f(t,t) dt -\int_t^T df(t,u)du$$
 $$          = r_t dt - \int_t^T \mu(t,u) dt du - \int_t^T \sigma(t,u) dW_t du$$
 
-Defining $\Mu(t,T) = \int_t^T \mu(t,u) du$ and $\Sigma(t,T) = \int_t^T \sigma(t,u) du$ we get
-$$dY(t,T) = (r_t-\Mu(t,T)) dt - \Sigma(t,T) dW_t$$
+Defining $M(t,T) = \int_t^T M(t,u) du$ and $\Sigma(t,T) = \int_t^T \sigma(t,u) du$ we get
+$$dY(t,T) = (r_t-M(t,T)) dt - \Sigma(t,T) dW_t$$
 
 The dynamic of the zero-coupon bonds becomes:
-$$\frac{dP(t,T)}{P(t,T)} = (r_t - \Mu(t,T) + \frac{1}{2} \Sigma(t,T)\sigma(t,T)^T)dt - \Sigma(t,T) dW_t$$
+$$\frac{dP(t,T)}{P(t,T)} = (r_t - M(t,T) + \frac{1}{2} \Sigma(t,T)\sigma(t,T)^T)dt - \Sigma(t,T) dW_t$$
 
-Knowing from the arbitrage-free condition, we get that $\frac{P}{\beta}$ shoud be a Q-martingale and thus $\Mu(t,T)=\frac{1}{2} \Sigma(t,T)\sigma(t,T)^T$. Differentiating this last equation, we get :
+Knowing from the arbitrage-free condition, we get that $\frac{P}{\beta}$ shoud be a Q-martingale and thus $M(t,T)=\frac{1}{2} \Sigma(t,T)\sigma(t,T)^T$. Differentiating this last equation, we get :
 $$\mu(t,T) = \sigma(t,T) \int_t^T \sigma(t,u) du$$
 
 This leads to the main equation of the HJM framework, which describes the evolution of the forwards depending only on the volatility functions:
