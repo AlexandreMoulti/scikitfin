@@ -4,7 +4,7 @@ We start by defining the object of interest which are the interest rate curves. 
 $$P(t,T)=e^{\int_0^t f(t,u) du} $$
 
 The instantaneous short-rate is defined as $r_t = f(t,t)$, thus the current money account $\beta$ becomes:
-$$\beta_t=e^{\int_0^t r_u du}=e^{\int_0^t f(u,u) du$$
+$$\beta_t=e^{\int_0^t r_u du}=e^{\int_0^t f(u,u) du}$$
 
 The focus of the HJM framework is to model the joint distribution of the curves rates. We pose the following dynamic:
 $$df(t,T)=\mu(t,T)dt+\sigma(t,T)dW_t$$
