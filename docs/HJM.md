@@ -1,7 +1,7 @@
 # HJM Framework
 
 We start by defining the object of interest which are the interest rate curves. We model them through the zero-coupon prices and instantaneous forward rates associated :
-$$P(t,T)=e^{-\int_0^t f(t,u) du} $$
+$$P(t,T)=e^{-\int_t^T f(t,u) du} $$
 
 The instantaneous short-rate is defined as $r_t = f(t,t)$, thus the current money account $\beta$ becomes:
 $$\beta_t=e^{-\int_0^t r_u du}=e^{-\int_0^t f(u,u) du}$$
