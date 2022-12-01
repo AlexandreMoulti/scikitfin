@@ -26,7 +26,7 @@ Knowing from the arbitrage-free condition, we get that $\frac{P}{\beta}$ shoud b
 $$\mu(t,T) = \sigma(t,T) \int_t^T \sigma(t,u) du$$
 
 This leads to the main equation of the HJM framework, which describes the evolution of the forwards depending only on the volatility functions:
-$$df(t,T) = (\sigma(t,T) \int_t^T \sigma(t,u) du) dt + \sigma(t,T) dW_t$$
+$$df(t,T) = (\sigma(t,T) \int_t^T \sigma(t,u)^\top du) dt + \sigma(t,T) dW_t$$
 
 
 
