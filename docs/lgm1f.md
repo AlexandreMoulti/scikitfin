@@ -111,7 +111,7 @@ $$x_t = \int_0^t \sigma_f(u,t) (\int_u^t \sigma_f(u,s)ds)du + \int_0^t \sigma_f(
 In order to get a markovian equation of x_t we pose a seperable volatility function $\sigma_f(u,t)=\sigma_u K_{u,t}$ with the help of intermediary notations $K_t = e^{-\int_0^t \kappa_u du}$ and $K_{u,t}=\frac{K_u}{K_t}$.
 
 Using Fubini's theorem, we get the following expression for $x_t$
-$$x_t = K_t \int_0^t K_s (\int_0^s \frac{\sigma_u^2}{\kappa_u^2} du) ds  + K_t \int_0^t \frac{\sigma_u}{K_u}$$
+$$x_t = K_t \int_0^t K_s (\int_0^s \frac{\sigma_u^2}{K_u^2} du) ds  + K_t \int_0^t \frac{\sigma_u}{K_u} dW_u$$
 
 Applying Ito and defining $y_t := Var(x_t) = K_t^2 \int_0^t \frac{\sigma_u^2}{\kappa_u^2} du$, we get the followind SDE:
 $$dx_t = (y_t-\kappa_t x_t) dt + \sigma_t dW_t $$
