@@ -113,7 +113,7 @@ In order to get a markovian equation of x_t we pose a seperable volatility funct
 Using Fubini's theorem, we get the following expression for $x_t$
 $$x_t = K_t \int_0^t K_s (\int_0^s \frac{\sigma_u^2}{K_u^2} du) ds  + K_t \int_0^t \frac{\sigma_u}{K_u} dW_u$$
 
-Applying Ito and defining $y_t := Var(x_t) = K_t^2 \int_0^t \frac{\sigma_u^2}{\kappa_u^2} du$, we get the followind SDE:
+Applying Ito and defining $y_t := Var(x_t) = K_t^2 \int_0^t \frac{\sigma_u^2}{\K_u^2} du$, we get the followind SDE:
 $$dx_t = (y_t-\kappa_t x_t) dt + \sigma_t dW_t $$
 
 
