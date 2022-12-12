@@ -108,7 +108,7 @@ $$r_t = f(t,t) = f(0,t) + \int_0^t \sigma_f(u,t) (\int_u^t \sigma_f(u,s)ds)du + 
 If we define $x_t$ as $r_t = f(0,t)+x_t$, then it follows that
 $$x_t = \int_0^t \sigma_f(u,t) (\int_u^t \sigma_f(u,s)ds)du + \int_0^t \sigma_f(u,t)dW_u$$
 
-In order to get a markovian equation of x_t we pose a seperable volatility function $\sigma_f(u,t)=\sigma_u K_{u,t}$ with the help of intermediary notations $K_t = e^{-\int_0^t \kappa_u du}$ and $K_{u,t}=\frac{K_u}{K_t}$.
+In order to get a markovian equation of x_t we pose a seperable volatility function $\sigma_f(u,t)=\sigma_u K_{u,t}$ with the help of intermediary notations $K_t = e^{-\int_0^t \kappa_u du}$ and $K_{u,t}=\frac{K_t}{K_u}$.
 
 Using Fubini's theorem, we get the following expression for $x_t$
 $$x_t = K_t \int_0^t K_s (\int_0^s \frac{\sigma_u^2}{K_u^2} du) ds  + K_t \int_0^t \frac{\sigma_u}{K_u} dW_u$$
