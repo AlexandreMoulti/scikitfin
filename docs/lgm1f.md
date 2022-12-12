@@ -25,7 +25,7 @@ $$K_{t,u}:= \frac{K_u}{K_t} := \frac{exp(\int_0^t -\kappa_s ds)}{exp(\int_0^u -\
 $$\sigma_p(t,T) = \sigma_r(t) G(t,T)$$
 $$G(t,T)=(G(0,T)-G(0,t))e^{\int_0^t \kappa_u du}$$
 
-## options on zero-coupons bonds
+## Options on zero-coupons bonds
 Consider a european call option on a zero-coupon bond, paying at maturty T an amount
 $$V_T = (P(T,T+\tau)-K)^+ $$
 
@@ -34,7 +34,8 @@ $$V_t = P(t,T+\tau)\Phi(d_+)-P(t,T)K\Phi(d_-) $$
 
 with 
 $$d_{+-}=\frac{ln(\frac{P(t,T+\tau)}{KP(t,T)}) +- v/2}{\sqrt v}$$
-$$v(t,T) = \int_t^T (\sigma_p(u,T+\tau)-\sigma_p(u,T))^2 du$$
+$$v(t,T) = \int_t^T (\sigma_p(u,T+\tau)-\sigma_p(u,T))^2 du = (\int_T^{T+\tau} K_s ds)^2 \int_t^T \frac{\sigma_u^2}{K_u^2} du$$
+
 
 Remark : The price of a put option is given by
 $$P(t,T)K\Phi(-d_-) - P(t,T+\tau)\Phi(-d_+) $$
