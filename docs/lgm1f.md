@@ -44,8 +44,8 @@ $$P(t,T)K\Phi(-d_-) - P(t,T+\tau)\Phi(-d_+) $$
 
 ## Swaption
 
-Consider a swaption of expiry $T_0$ paying a coupon c at maturities $T_1,..,T_N$. By defining $\tau_i=T_i-T_{i-1}$ the value at expiry $T_0$ is the following :
-$$V(T_0)=(1-P(T_0,T_N) - c \sum_{i=1}^{N}{\tau_i P(T_0,T_i)})^+$$
+Consider a swaption of expiry $T_0$ paying a fixed coupon c at maturities $T_1,..,T_N$ in exchange of a variable bor rate. By defining $\tau_i=T_i-T_{i-1}$ the value at expiry $T_0$ is the following :
+$$V(T_0) = \left[ 1-P(T_0,T_N) - c \sum_{i=1}^{N}{\tau_i P(T_0,T_i)} \right]^+$$
 
 ### Swaptions 1: semi analytical formula
 Let's define Jamishidian strikes as $K_i=P(T_0, T_i, x*)$ where
