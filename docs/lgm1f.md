@@ -52,7 +52,7 @@ Let's define Jamishidian strikes as $K_i=P(T_0, T_i, x*)$ where
 $$1 = P(T_0,T_N,x*) + c \sum_1^N {\tau_i P(T_0,T_{i},x*)}$$
 
 Then the Jamishidian trick gives us the following formula :
-$$V(T_0) = (K_N - P(T_0,T_N,x_{T_0}))^+ + c \sum_1^N \tau_i (K_i-P(T_0,T_i,x_{T_0}))^+$$
+$$V(T_0) = \left[ K_N - P(T_0,T_N,x_{T_0}) \right]^+ + c \sum_1^N \tau_i \left[ K_i-P(T_0,T_i,x_{T_0}) \right]^+$$
 
 ### Swaptions 2: approximate formula for fast calibration
 
