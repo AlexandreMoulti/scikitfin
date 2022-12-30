@@ -21,7 +21,7 @@ $$P(t,T) = \frac{P(0,T)}{P(0,t)} exp(-x_t G(t,T)-\frac{1}{2} y_t G(t,T)^2 )$$
 $$G(t,T) = \int_t^T exp(-\int_t^u \kappa_s ds) du= \int_t^T K_{t,u} du$$
 
 with
-$$K_{t,u}:= \frac{K_u}{K_t} := \frac{exp(\int_0^t -\kappa_s ds)}{exp(\int_0^u -\kappa_s ds)}$$
+$$K_{t,u}:= \frac{K_u}{K_t} := \frac{exp(-\int_0^t \kappa_s ds)}{exp(-\int_0^u \kappa_s ds)}$$
 $$\sigma_p(t,T) = \sigma_r(t) G(t,T)$$
 $$G(t,T)=(G(0,T)-G(0,t))e^{\int_0^t \kappa_u du}$$
 
