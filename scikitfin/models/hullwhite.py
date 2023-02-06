@@ -3,13 +3,15 @@ import pandas as pd
 from scipy import interpolate
 import matplotlib.pyplot as plt
 from typing import Literal, Union, List, Any, Tuple, Callable
-from numpy.typing import ArrayLike
 from math import *
 from scipy.stats import norm
 from scipy import optimize
 
-
-######## static methods #################
+########################################################################################################################
+#
+# STATIC METHODS
+#
+########################################################################################################################
 
 @np.vectorize
 def G(tau: float, kappa: float) -> float:
@@ -17,7 +19,7 @@ def G(tau: float, kappa: float) -> float:
     function used to compute ZC prices
     Parameters
     ----------
-    tau : ArrayLike
+    tau : np.ndarray
         time steps.
     kappa : float
         parameters of the model.
@@ -25,7 +27,7 @@ def G(tau: float, kappa: float) -> float:
     -------
     np.ndarray.
     """
-    return 1e-6 if tau < 1e-6 else (1 - np.exp(-kappa * tau)) / kappa
+    return 1e-10 if tau < 1e-10 else (1 - np.exp(-kappa * tau)) / kappa
 
 
 def variance(t: float, kappa: float, sigma: float) -> float:
@@ -46,15 +48,15 @@ def variance(t: float, kappa: float, sigma: float) -> float:
     return 0.5 * sigma ** 2 * G(2 * t, kappa)
 
 
-@np.vectorize
-def zc_bond_volatility(t: float, T: np.ndarray, kappa: float, sigma: float) -> np.ndarray:
+def zc_bond_volatility(t: float, maturities: np.ndarray, kappa: float, sigma: float) -> np.ndarray:
     """
-    Volotility of ZC
+    Volatility of ZC
+
     Parameters
     ----------
     t : float
         current time.
-    T : ArrayLike
+    maturities : np.ndarray
         expiry of the ZC bond
     kappa : float
         parameters of the model.
@@ -64,10 +66,9 @@ def zc_bond_volatility(t: float, T: np.ndarray, kappa: float, sigma: float) -> n
     -------
     np.ndarray.
     """
-    return 0.5 * sigma ** 2 * G(T, kappa) ** 2 * G(2 * (T - t), kappa)
+    return 0.5 * sigma ** 2 * G(maturities, kappa) ** 2 * G(2 * (maturities - t), kappa)
 
 
-@np.vectorize
 def mean(t: float, x: float, kappa: float, sigma: float) -> np.ndarray:
     """
     Mean of the stochastic process x
@@ -83,7 +84,7 @@ def mean(t: float, x: float, kappa: float, sigma: float) -> np.ndarray:
         volatility of the short rate
     Returns
     -------
-    nd.ndaray.
+    np.ndarray.
     """
     return x * np.exp(-kappa * t) + 0.5 * sigma ** 2 * G(t, kappa) ** 2
 
@@ -92,8 +93,8 @@ def mean(t: float, x: float, kappa: float, sigma: float) -> np.ndarray:
 
 class HullWhite(object):
 
-    def __init__(self, kappa: float, sigma: float, func_instant_forwards: Callable[[ArrayLike], np.ndarray],
-                 func_spot_zc: Callable[[ArrayLike], np.ndarray]
+    def __init__(self, kappa: float, sigma: float, func_instant_forwards: Callable[[np.ndarray], np.ndarray],
+                 func_spot_zc: Callable[[np.ndarray], np.ndarray]
                  ) -> None:
         """
         Interest Rates Gaussian 1 Factor model with constant parameters
@@ -114,7 +115,7 @@ class HullWhite(object):
         self.func_instant_forwards = func_instant_forwards
         self.func_spot_zc = func_spot_zc
 
-    def price_zc(self, x: float, t: float, T: ArrayLike, kappa: float, sigma: float) -> np.ndarray:
+    def price_zc(self, x: float, t: float, T: np.ndarray, kappa: float, sigma: float) -> np.ndarray:
         """
         ZC price
         Parameters
@@ -123,7 +124,7 @@ class HullWhite(object):
             stochastic process x ( x = r - f )
         t : float
             current time.
-        T : ArrayLike
+        T : np.ndarray
             expiry of the ZC bond
         kappa : float
             parameters of the model.
@@ -134,11 +135,10 @@ class HullWhite(object):
         np.ndarray.
         """
         return (self.func_spot_zc(T) / self.func_spot_zc(t)) * \
-               np.exp(-x * IRGauss1FConst.G(T - t, kappa) - 0.5 * IRGauss1FConst.variance(t, kappa, sigma) \
-                      * IRGauss1FConst.G(T - t, kappa) ** 2)
+               np.exp(-x * G(T - t, kappa) - 0.5 * variance(t, kappa, sigma) * G(T - t, kappa) ** 2)
 
-    def black_tools(self, x: float, t: float, maturity: ArrayLike,
-                    tenor: ArrayLike, K: ArrayLike, kappa: float, sigma: float) -> Tuple:
+    def black_tools(self, x: float, t: float, maturity: np.ndarray,
+                    tenor: np.ndarray, K: np.ndarray, kappa: float, sigma: float) -> Tuple:
         """
         black tools
         Parameters
@@ -147,11 +147,11 @@ class HullWhite(object):
             stochastic process x ( x = r - f )
         t : float
             current time.
-        maturity: ArrayLike
+        maturity: np.ndarray
             expiry of the option
-        tenor: ArrayLike
+        tenor: np.ndarray
             expiry of the zc underlying
-        K : ArrayLike
+        K : np.ndarray
             strike of the option
         kappa : float
             parameters of the model.
@@ -161,30 +161,29 @@ class HullWhite(object):
         -------
         np.ndarray.
         """
-        maturity = np.array(maturity)
-        v = IRGauss1FConst.zc_bond_volatility(t, maturity, kappa, sigma)
+        v = zc_bond_volatility(t, maturity, kappa, sigma)
         P_up = self.price_zc(x, t, maturity + tenor, kappa, sigma)
         P_down = self.price_zc(x, t, maturity, kappa, sigma)
         d_positif = (np.log(P_up / (K * P_down)) + v / 2) / np.sqrt(v)
         d_negatif = (np.log(P_up / (K * P_down)) - v / 2) / np.sqrt(v)
         return P_up, P_down, d_positif, d_negatif
 
-    def price_zc_call(self, x: float, t: float, maturity: ArrayLike, tenor: ArrayLike,
-                      K: ArrayLike, kappa: float, sigma: float) -> np.ndarray:
+    def price_zc_call(self, x: float, t: float, maturity: np.ndarray, tenor: np.ndarray,
+                      K: np.ndarray, kappa: float, sigma: float) -> np.ndarray:
         """
         price of call option on ZC
-        P185
+
         Parameters
         ----------
         x : float
             stochastic process x ( x = r - f )
         t : float
             current time.
-        maturity: ArrayLike
+        maturity: np.ndarray
             expiry of the option
-        tenor: ArrayLike
+        tenor: np.ndarray
             expiry of the zc underlying
-        K : ArrayLike
+        K : np.ndarray
             strike of the option
         kappa : float
             parameters of the model.
@@ -195,25 +194,24 @@ class HullWhite(object):
         np.ndaaray.
         """
         P_up, P_down, d_positif, d_negatif = self.black_tools(x, t, maturity, tenor, K, kappa, sigma)
-
         return P_up * norm.cdf(d_positif) - P_down * K * norm.cdf(d_negatif)
 
-    def price_zc_put(self, x: float, t: float, maturity: ArrayLike,
-                     tenor: ArrayLike, K: ArrayLike, kappa: float, sigma: float) -> np.ndarray:
+    def price_zc_put(self, x: float, t: float, maturity: np.ndarray,
+                     tenor: np.ndarray, K: np.ndarray, kappa: float, sigma: float) -> np.ndarray:
         """
         price of put option on ZC
-        p185
+
         Parameters
         ----------
         x : float
             stochastic process x ( x = r - f )
         t : float
             current time.@
-        maturity: ArrayLike
+        maturity: np.ndarray
             expiry of the option
-        tenor: ArrayLike
+        tenor: np.ndarray
             expiry of the zc underlying
-        K : ArrayLike
+        K : np.ndarray
             strike of the option
         kappa : float
             parameters of the model.
@@ -223,12 +221,10 @@ class HullWhite(object):
         -------
         np.ndarray.
         """
-
         P_up, P_down, d_positif, d_negatif = self.black_tools(x, t, maturity, tenor, K, kappa, sigma)
-
         return P_down * K * norm.cdf(-d_negatif) - P_up * norm.cdf(-d_positif)
 
-    def price_swaption(self, x: float, t: float, schedule: ArrayLike,
+    def price_swaption(self, x: float, t: float, schedule: np.ndarray,
                        strike: float, kappa: float, sigma: float) -> float:
         """
         price of swaption
@@ -250,7 +246,6 @@ class HullWhite(object):
         -------
         float.
         """
-        # p421
         # schedule = (t0,t1,...,tN)
 
         steps_time = np.diff(schedule)
@@ -265,12 +260,8 @@ class HullWhite(object):
         solution = optimize.root(root_function, 1)
         optimal_x = solution.x
         K = self.price_zc(optimal_x, t, payment_date, kappa, sigma)
-        Vswaption = np.sum(
-            steps_time * K * self.price_zc_put(x, t, t, payment_date - t, K, kappa, sigma)) + self.price_zc_put(x, t, t,
-                                                                                                                Tn - t,
-                                                                                                                K[-1],
-                                                                                                                kappa,
-                                                                                                                sigma)
+        Vswaption = np.sum(steps_time * K * self.price_zc_put(x, t, t, payment_date - t, K, kappa, sigma)) +\
+                    self.price_zc_put(x, t, t, Tn - t, K[-1], kappa, sigma)
         return Vswaption
 
     def simulate(self, grid, dN):
