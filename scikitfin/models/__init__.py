@@ -1,1 +1,1 @@
-from models.hullwhite import HullWhite
+from scikitfin.models.hullwhite import HullWhite
