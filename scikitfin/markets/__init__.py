@@ -1,2 +1,2 @@
-from markets.ircurve import InterestRateCurve
-from markets.swaptionsurface import SwaptionSurface
+from scikitfin.markets.ircurve import InterestRateCurve
+from scikitfin.markets.swaptionsurface import SwaptionSurface
