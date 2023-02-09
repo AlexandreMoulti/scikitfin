@@ -20,8 +20,14 @@ print(irc.zc_prices)
 
 ######## models ###########################################
 
-hw = HullWhite(init=0.01, kappa=2/10, sigma=2)
+hw = HullWhite(kappa=2/10, sigma=2)
 grid=0 #use grid object
 short_rates = hw.simulate(grid) #
+hw.price_zc(10) #prix model
+hw.fit(ircurve)
+hw.price_zc(10) #prix spot = prix market
+# hw.swpation(maturity,  tenor) = prix swap manager
+
+#plus tard
 hw.fit(ircurve, swaptiondata)
 #new_short_rates = hw.simulate()
