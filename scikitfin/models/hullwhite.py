@@ -7,6 +7,7 @@ from math import *
 from scipy.stats import norm
 from scipy import optimize
 
+
 ########################################################################################################################
 #
 # STATIC METHODS
@@ -89,13 +90,16 @@ def mean(t: float, x: float, kappa: float, sigma: float) -> np.ndarray:
     return x * np.exp(-kappa * t) + 0.5 * sigma ** 2 * G(t, kappa) ** 2
 
 
+def root_function(x, *args):
+    price_zc, strike, schedule, vec_dt, kappa, sigma = args
+    return -1 + price_zc(x, schedule[0], schedule[-1], kappa, sigma) + strike * np.sum(vec_dt * price_zc(x, schedule[0], schedule[1:], kappa, sigma))
+
+
 ######## Hull White ###############
 
 class HullWhite(object):
 
-    def __init__(self, kappa: float, sigma: float, func_instant_forwards: Callable[[np.ndarray], np.ndarray],
-                 func_spot_zc: Callable[[np.ndarray], np.ndarray]
-                 ) -> None:
+    def __init__(self, kappa: float, sigma: float) -> None:
         """
         Interest Rates Gaussian 1 Factor model with constant parameters
         Parameters
@@ -112,10 +116,24 @@ class HullWhite(object):
         """
         self.kappa = kappa
         self.sigma = sigma
-        self.func_instant_forwards = func_instant_forwards
-        self.func_spot_zc = func_spot_zc
+        self.func_instant_forwards = lambda x: 0
+        self.func_spot_zc = lambda x: 1
 
-    def price_zc(self, x: float, t: float, T: np.ndarray, kappa: float, sigma: float) -> np.ndarray:
+    def price_zc_spot(self, maturity: float):
+        """
+
+        Parameters
+        ----------
+        maturity : float
+            maturity of the zero coupon
+
+        Returns
+        -------
+            price of a zero coupon
+        """
+        return self.func_spot_zc(maturity)
+
+    def price_zc(self, x: float, t: float, maturity: np.ndarray, kappa: float, sigma: float) -> np.ndarray:
         """
         ZC price
         Parameters
@@ -124,7 +142,7 @@ class HullWhite(object):
             stochastic process x ( x = r - f )
         t : float
             current time.
-        T : np.ndarray
+        maturity : np.ndarray
             expiry of the ZC bond
         kappa : float
             parameters of the model.
@@ -134,11 +152,11 @@ class HullWhite(object):
         -------
         np.ndarray.
         """
-        return (self.func_spot_zc(T) / self.func_spot_zc(t)) * \
-               np.exp(-x * G(T - t, kappa) - 0.5 * variance(t, kappa, sigma) * G(T - t, kappa) ** 2)
+        return (self.func_spot_zc(maturity) / self.func_spot_zc(t)) * \
+               np.exp(-x * G(maturity - t, kappa) - 0.5 * variance(t, kappa, sigma) * G(maturity - t, kappa) ** 2)
 
     def black_tools(self, x: float, t: float, maturity: np.ndarray,
-                    tenor: np.ndarray, K: np.ndarray, kappa: float, sigma: float) -> Tuple:
+                    tenor: np.ndarray, strike: np.ndarray, kappa: float, sigma: float) -> Tuple:
         """
         black tools
         Parameters
@@ -151,7 +169,7 @@ class HullWhite(object):
             expiry of the option
         tenor: np.ndarray
             expiry of the zc underlying
-        K : np.ndarray
+        strike : np.ndarray
             strike of the option
         kappa : float
             parameters of the model.
@@ -162,14 +180,14 @@ class HullWhite(object):
         np.ndarray.
         """
         v = zc_bond_volatility(t, maturity, kappa, sigma)
-        P_up = self.price_zc(x, t, maturity + tenor, kappa, sigma)
-        P_down = self.price_zc(x, t, maturity, kappa, sigma)
-        d_positif = (np.log(P_up / (K * P_down)) + v / 2) / np.sqrt(v)
-        d_negatif = (np.log(P_up / (K * P_down)) - v / 2) / np.sqrt(v)
-        return P_up, P_down, d_positif, d_negatif
+        p_up = self.price_zc(x, t, maturity + tenor, kappa, sigma)
+        p_down = self.price_zc(x, t, maturity, kappa, sigma)
+        d_positif = (np.log(p_up / (strike * p_down)) + v / 2) / np.sqrt(v)
+        d_negatif = (np.log(p_up / (strike * p_down)) - v / 2) / np.sqrt(v)
+        return p_up, p_down, d_positif, d_negatif
 
     def price_zc_call(self, x: float, t: float, maturity: np.ndarray, tenor: np.ndarray,
-                      K: np.ndarray, kappa: float, sigma: float) -> np.ndarray:
+                      strike: np.ndarray, kappa: float, sigma: float) -> np.ndarray:
         """
         price of call option on ZC
 
@@ -183,7 +201,7 @@ class HullWhite(object):
             expiry of the option
         tenor: np.ndarray
             expiry of the zc underlying
-        K : np.ndarray
+        strike : np.ndarray
             strike of the option
         kappa : float
             parameters of the model.
@@ -193,11 +211,11 @@ class HullWhite(object):
         -------
         np.ndaaray.
         """
-        P_up, P_down, d_positif, d_negatif = self.black_tools(x, t, maturity, tenor, K, kappa, sigma)
-        return P_up * norm.cdf(d_positif) - P_down * K * norm.cdf(d_negatif)
+        p_up, p_down, d_positif, d_negatif = self.black_tools(x, t, maturity, tenor, strike, kappa, sigma)
+        return p_up * norm.cdf(d_positif) - p_down * strike * norm.cdf(d_negatif)
 
     def price_zc_put(self, x: float, t: float, maturity: np.ndarray,
-                     tenor: np.ndarray, K: np.ndarray, kappa: float, sigma: float) -> np.ndarray:
+                     tenor: np.ndarray, strike: np.ndarray, kappa: float, sigma: float) -> np.ndarray:
         """
         price of put option on ZC
 
@@ -211,7 +229,7 @@ class HullWhite(object):
             expiry of the option
         tenor: np.ndarray
             expiry of the zc underlying
-        K : np.ndarray
+        strike : np.ndarray
             strike of the option
         kappa : float
             parameters of the model.
@@ -221,17 +239,18 @@ class HullWhite(object):
         -------
         np.ndarray.
         """
-        P_up, P_down, d_positif, d_negatif = self.black_tools(x, t, maturity, tenor, K, kappa, sigma)
-        return P_down * K * norm.cdf(-d_negatif) - P_up * norm.cdf(-d_positif)
+        p_up, p_down, d_positif, d_negatif = self.black_tools(x, t, maturity, tenor, strike, kappa, sigma)
+        return p_down * strike * norm.cdf(-d_negatif) - p_up * norm.cdf(-d_positif)
 
     def price_swaption(self, x: float, t: float, schedule: np.ndarray,
                        strike: float, kappa: float, sigma: float) -> float:
         """
         price of swaption
+
         Parameters
         ----------
         x : float
-            stochastic process x ( x = r - f )
+            state process x at current time t
         t : float
             current time.
         schedule: Tuple
@@ -248,21 +267,15 @@ class HullWhite(object):
         """
         # schedule = (t0,t1,...,tN)
 
-        steps_time = np.diff(schedule)
-        payment_date = np.array(schedule)[1:]
-        Tn = payment_date[-1]
+        vec_dt = np.diff(schedule)
 
-        def root_function(x):
-            output = -1 + self.price_zc(x, t, Tn, kappa, sigma) + np.sum(
-                strike * steps_time * self.price_zc(x, t, payment_date, kappa, sigma))
-            return output
-
-        solution = optimize.root(root_function, 1)
+        solution = optimize.root(root_function, 0.05, args=(self.price_zc, strike, schedule, vec_dt, kappa, sigma))
         optimal_x = solution.x
-        K = self.price_zc(optimal_x, t, payment_date, kappa, sigma)
-        Vswaption = np.sum(steps_time * K * self.price_zc_put(x, t, t, payment_date - t, K, kappa, sigma)) +\
-                    self.price_zc_put(x, t, t, Tn - t, K[-1], kappa, sigma)
-        return Vswaption
+        vec_k = self.price_zc(optimal_x, schedule[0], schedule[1:], kappa, sigma)
+        return strike * np.sum(
+            vec_dt * self.price_zc_put(x, t, schedule[0] - t, schedule[1:] - schedule[0], vec_k, kappa, sigma)
+        ) + \
+               self.price_zc_put(x, t, schedule[0] - t, schedule[-1] - schedule[0], vec_k[-1], kappa, sigma)
 
     def simulate(self, grid, dN):
         """
@@ -287,7 +300,7 @@ class HullWhite(object):
                                 np.sqrt(self.variance(dt)) * dN[:, j]
         return simulations + self.func_instant_forwards(grid.time_grid)
 
-
-    def fit(self, swaptiondata):
+    def fit(self, ircurve):
         # calibrates kappa sigma to the data
-        pass
+        self.func_instant_forwards = ircurve.func_instant_forwards
+        self.func_spot_zc = ircurve.func_zc_prices
