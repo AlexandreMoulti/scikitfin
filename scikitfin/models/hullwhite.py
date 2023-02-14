@@ -49,7 +49,7 @@ def variance(t: float, kappa: float, sigma: float) -> float:
     return 0.5 * sigma ** 2 * G(2 * t, kappa)
 
 
-def zc_bond_volatility(t: float, maturities: np.ndarray, kappa: float, sigma: float) -> np.ndarray:
+def zc_bond_volatility(t: float, maturities: np.ndarray, tenor: float, kappa: float, sigma: float) -> np.ndarray:
     """
     Volatility of ZC
 
@@ -59,6 +59,8 @@ def zc_bond_volatility(t: float, maturities: np.ndarray, kappa: float, sigma: fl
         current time.
     maturities : np.ndarray
         expiry of the ZC bond
+    tenor : float
+        tenor of the underlying
     kappa : float
         parameters of the model.
     sigma : float
@@ -67,7 +69,7 @@ def zc_bond_volatility(t: float, maturities: np.ndarray, kappa: float, sigma: fl
     -------
     np.ndarray.
     """
-    return 0.5 * sigma ** 2 * G(maturities, kappa) ** 2 * G(2 * (maturities - t), kappa)
+    return sigma ** 2 * G(tenor, kappa) ** 2 * G(maturities - t, 2*kappa)
 
 
 def mean(t: float, x: float, kappa: float, sigma: float) -> np.ndarray:
@@ -179,7 +181,7 @@ class HullWhite(object):
         -------
         np.ndarray.
         """
-        v = zc_bond_volatility(t, maturity, kappa, sigma)
+        v = zc_bond_volatility(t, maturity, tenor, kappa, sigma)
         p_up = self.price_zc(x, t, maturity + tenor, kappa, sigma)
         p_down = self.price_zc(x, t, maturity, kappa, sigma)
         d_positif = (np.log(p_up / (strike * p_down)) + v / 2) / np.sqrt(v)
