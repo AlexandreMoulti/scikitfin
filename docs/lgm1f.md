@@ -38,7 +38,7 @@ $$V_t = P(t,T+\tau)\Phi(d_+)-P(t,T)K\Phi(d_-) $$
 
 with 
 $$d_{+-}=\frac{ln(\frac{P(t,T+\tau)}{KP(t,T)}) +- v/2}{\sqrt v}$$
-$$v(t,T) = \int_t^T (\sigma_p(u,T+\tau)-\sigma_p(u,T))^2 du = (\int_T^{T+\tau} K_s ds)^2 \int_t^T \frac{\sigma_u^2}{K_u^2} du$$
+$$v(t,T, \tau) = \int_t^T (\sigma_p(u,T+\tau)-\sigma_p(u,T))^2 du = (\int_T^{T+\tau} K_s ds)^2 \int_t^T \frac{\sigma_u^2}{K_u^2} du$$
 
 
 Remark : The price of a put option is given by
@@ -72,8 +72,8 @@ $$y_t = \frac{\sigma^2}{2\kappa} (1-exp(-2\kappa t))$$
 
 For pricing of swaptions, we need to express the quantity v:
 
-$$v(t,T) = \int_t^T (\sigma_p(u,T+\tau)-\sigma_p(u,T))^2 du
-         = \sigma^2 G(T)^2 \frac{G(2(T-t))}{2}$$
+$$v(t,T, tenor) = \int_t^T (\sigma_p(u,T+\tau)-\sigma_p(u,T))^2 du
+         = \sigma^2 G(tenor)^2 G((T-t), 2 \kappa)$$
 
 
 ## diffusion of $x_t$ in the constant case
