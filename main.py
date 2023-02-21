@@ -7,7 +7,7 @@ from scikitfin.models import HullWhite
 from scikitfin.markets import ircurve
 
 import pandas as pd
-data_curve = pd.read_csv('courbe.csv')
+data_curve = pd.read_csv('tests/courbe.csv')
 ######### market data ###################################
 
 maturities = data_curve['maturity'].to_numpy()
