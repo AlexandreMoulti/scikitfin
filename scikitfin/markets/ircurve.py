@@ -291,6 +291,27 @@ class InterestRateCurve(object):
         plt.plot(self.maturities, values)
         plt.show()
 
+    @np.vectorize
+    def forward_swap_rate(self, array_of_tuple : np.ndarray, dt: float = 0.5) -> np.ndarray:
+        """
+        compute the forward swap rate
+
+        Convention : the underlying swap pays coupon eac semester
+        Parameters
+        ----------
+        array_of_tuple ( expiry, tenor)
+        dt : float
+            time step convention for the swap
+
+        Returns
+        -------
+        """
+        expiry, tenor = array_of_tuple[0], array_of_tuple[1]
+        maturities = np.arange(expiry + dt, expiry + tenor + dt, dt)
+        annuity_factor = np.sum(dt * self.func_zc_prices(maturities))
+        swap_rate = (self.func_zc_prices(expiry) - self.func_zc_prices(tenor + expiry)) / annuity_factor
+
+        return swap_rate
     ########################## CLASS METHODS  ########################################################################
 
     @classmethod
