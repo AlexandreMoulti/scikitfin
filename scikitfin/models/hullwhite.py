@@ -148,6 +148,21 @@ def black_tools(x: float, t: float, maturity: np.ndarray, tenor: np.ndarray, str
     return p_up, p_down, d_positif, d_negatif
 
 
+def price_zc_spot(maturity: float, func_spot_zc):
+    """
+
+    Parameters
+    ----------
+    func_spot_zc
+    maturity : float
+        maturity of the zero coupon
+
+    Returns
+    -------
+        price of a zero coupon
+    """
+    return func_spot_zc(maturity)
+
 def price_zc_call(x: float, t: float, maturity: np.ndarray, tenor: np.ndarray,
                   strike: np.ndarray, func_spot_zc, kappa: float, sigma: float) -> np.ndarray:
     """
@@ -236,10 +251,11 @@ def price_swaption(x: float, t: float, array_of_tuple: np.ndarray,
     np.ndarray.
     """
     # schedule = (t0,t1,...,tN)
+
     maturity, tenor = array_of_tuple[0], array_of_tuple[1]
     schedule = np.arange(t+maturity, t+maturity+tenor+dt, dt)
 
-    solution = optimize.root(x_root_function, 0.05, args=(strike, schedule, dt, kappa, sigma))
+    solution = optimize.root(x_root_function, 0.05, args=(strike, schedule, func_spot_zc, dt, kappa, sigma))
     optimal_x = solution.x
     vec_k = price_zc(optimal_x, schedule[0], schedule[1:], func_spot_zc, kappa, sigma)
     return strike * np.sum(dt * price_zc_put(x, t, maturity, schedule[1:] - schedule[0], vec_k, func_spot_zc, kappa,
@@ -247,8 +263,9 @@ def price_swaption(x: float, t: float, array_of_tuple: np.ndarray,
 
 
 def x_root_function(x, *args):
-    strike, schedule, vec_dt, kappa, sigma = args
-    return -1 + price_zc(x, schedule[0], schedule[-1], kappa, sigma) + strike * np.sum(vec_dt * price_zc(x, schedule[0], schedule[1:], kappa, sigma))
+    strike, schedule, func_spot_zc, vec_dt, kappa, sigma = args
+    return -1 + price_zc(x, schedule[0], schedule[-1], func_spot_zc, kappa, sigma) + \
+            strike * np.sum(vec_dt * price_zc(x, schedule[0], schedule[1:], func_spot_zc, kappa, sigma))
 
 
 
@@ -269,11 +286,12 @@ def compute_model_premiums(ircurve, swaptionsurface, kappa: float, sigma: float,
     -------
 
     """
-    x, t = 0
-    premiums_market = swaptionsurface['value']
-    vect_strike_ATM = ircurve.forward_swap_rate(swaptionsurface, dt)
+    x = 0
+    t = 0
+    premiums_market = swaptionsurface['value'] / 100
+    vect_strike_ATM = ircurve.vect_forward_swap_rate(swaptionsurface, dt)
     premiums_model = price_swaption(x, t, swaptionsurface, vect_strike_ATM, ircurve.func_zc_prices,
-                                         kappa, sigma, dt)
+                                    kappa, sigma, dt)
 
     return premiums_model, premiums_market
 
@@ -445,8 +463,8 @@ class HullWhite(object):
         -------
         np.ndarray.
         """
-
-        return price_swaption(x, t, (maturity, tenor), strike, self.func_spot_zc, self.kappa, self.sigma, dt)
+        array_of_tuple = np.array([(maturity, tenor)],dtype=[("maturity", "i4"), ("tenor", "i4")])
+        return price_swaption(x, t, array_of_tuple, strike, self.func_spot_zc, self.kappa, self.sigma, dt)
 
     def simulate(self, number_simulations, horizon, dt, dN):
         """

@@ -220,6 +220,7 @@ class InterestRateCurve(object):
         elif method == 'Yield':
             self.zc_prices: np.ndarray = yields_to_zc_prices(maturities, data)
         self.instant_forwards: np.ndarray = zc_prices_to_inst_forwards(self.maturities, self.zc_prices)
+        self.vect_forward_swap_rate = np.vectorize(self.forward_swap_rate, excluded='self')
 
     def __str__(self) -> str:
         """
@@ -291,15 +292,15 @@ class InterestRateCurve(object):
         plt.plot(self.maturities, values)
         plt.show()
 
-    @np.vectorize
-    def forward_swap_rate(self, array_of_tuple : np.ndarray, dt: float = 0.5) -> np.ndarray:
+
+    def forward_swap_rate(self, array_of_tuple: np.ndarray, dt: float = 0.5) -> np.ndarray:
         """
         compute the forward swap rate
 
         Convention : the underlying swap pays coupon eac semester
         Parameters
         ----------
-        array_of_tuple ( expiry, tenor)
+        array_of_tuple : ( expiry, tenor)
         dt : float
             time step convention for the swap
 
@@ -312,6 +313,7 @@ class InterestRateCurve(object):
         swap_rate = (self.func_zc_prices(expiry) - self.func_zc_prices(tenor + expiry)) / annuity_factor
 
         return swap_rate
+
     ########################## CLASS METHODS  ########################################################################
 
     @classmethod
