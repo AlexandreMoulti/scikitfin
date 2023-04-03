@@ -35,7 +35,6 @@ def inst_forwards_to_zc_prices(maturities: np.ndarray,
         maturities = np.concatenate(([0], maturities))
     return np.exp(-np.cumsum(instant_forwards * np.diff(maturities)))
 
-
 def zc_prices_to_inst_forwards(maturities: np.ndarray,
                                zc_prices: np.ndarray
                                ) -> np.ndarray:
@@ -58,7 +57,6 @@ def zc_prices_to_inst_forwards(maturities: np.ndarray,
         zc_prices = np.concatenate(([1], zc_prices))
     return np.diff(-np.log(zc_prices)) / np.diff(maturities)
 
-
 def zc_prices_to_yields(maturities: np.ndarray,
                         zc_prices: np.ndarray
                         ) -> np.ndarray:
@@ -77,7 +75,6 @@ def zc_prices_to_yields(maturities: np.ndarray,
         yield curve.
     """
     return -np.log(zc_prices) / maturities
-
 
 def yields_to_zc_prices(maturities: np.ndarray,
                         yields: np.ndarray
@@ -119,7 +116,6 @@ def zc_prices_to_swap_rates(maturities: np.ndarray,
     dt = np.diff(maturities)
     return (1 - zc_prices) / (dt * zc_prices).cumsum()
 
-
 def swap_rates_to_zc_prices(maturities: np.ndarray,
                             swap_rates: np.ndarray
                             ) -> np.ndarray:
@@ -143,7 +139,6 @@ def swap_rates_to_zc_prices(maturities: np.ndarray,
         zc_temp = (1 - np.sum(zc * dt[:idx + 1] * rate)) / (1 + dt[idx] * rate)
         zc.append(zc_temp)
     return np.array(zc)
-
 
 def actuarial_rates_to_zc_prices(maturities: np.ndarray,
                                  actuarial_rates: np.ndarray
@@ -184,6 +179,26 @@ def zc_prices_to_actuarial_rates(maturities: np.ndarray,
     return np.power(zc_prices, -1 / maturities) - 1
 
 
+def forward_swap_rate(expiry:float, tenor:float, func_zc_prices, dt: float = 0.5) -> float:
+    """
+    compute the forward swap rate
+
+    Convention : the underlying swap pays coupon eac semester
+    Parameters
+    ----------
+    array_of_tuple : ( expiry, tenor)
+    dt : float
+        time step convention for the swap
+
+    Returns
+    -------
+    """
+    maturities = np.arange(expiry + dt, expiry + tenor + dt, dt)
+    annuity_factor = np.sum(dt * func_zc_prices(maturities))
+    swap_rate = (func_zc_prices(expiry) - func_zc_prices(tenor + expiry)) / annuity_factor
+
+forward_swap_rate = np.vectorize(forward_swap_rate, excluded=['func_zc_prices'])
+
 ###############################################################################
 #
 # INTEREST RATES
@@ -220,7 +235,6 @@ class InterestRateCurve(object):
         elif method == 'Yield':
             self.zc_prices: np.ndarray = yields_to_zc_prices(maturities, data)
         self.instant_forwards: np.ndarray = zc_prices_to_inst_forwards(self.maturities, self.zc_prices)
-        self.vect_forward_swap_rate = np.vectorize(self.forward_swap_rate, excluded='self')
 
     def __str__(self) -> str:
         """
@@ -293,7 +307,7 @@ class InterestRateCurve(object):
         plt.show()
 
 
-    def forward_swap_rate(self, array_of_tuple: np.ndarray, dt: float = 0.5) -> np.ndarray:
+    def forward_swap_rate(self, expiry:float, tenor:float, dt: float = 0.5) -> float:
         """
         compute the forward swap rate
 
@@ -307,12 +321,7 @@ class InterestRateCurve(object):
         Returns
         -------
         """
-        expiry, tenor = array_of_tuple[0], array_of_tuple[1]
-        maturities = np.arange(expiry + dt, expiry + tenor + dt, dt)
-        annuity_factor = np.sum(dt * self.func_zc_prices(maturities))
-        swap_rate = (self.func_zc_prices(expiry) - self.func_zc_prices(tenor + expiry)) / annuity_factor
-
-        return swap_rate
+        return forward_swap_rate(expiry, tenor, self.func_zc_prices, dt)
 
     ########################## CLASS METHODS  ########################################################################
 

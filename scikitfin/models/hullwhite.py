@@ -30,7 +30,8 @@ def G(tau: float, kappa: float) -> float:
     """
     return 1e-10 if tau < 1e-10 else (1 - np.exp(-kappa * tau)) / kappa
 
-def mean(t: float, x: float, kappa: float, sigma: float) -> np.ndarray:
+
+def mean(t: float, x: float, kappa: float, sigma: float) -> float:
     """
     Mean of the stochastic process x
     Parameters
@@ -48,7 +49,6 @@ def mean(t: float, x: float, kappa: float, sigma: float) -> np.ndarray:
     np.ndarray.
     """
     return x * np.exp(-kappa * t) + 0.5 * sigma ** 2 * G(t, kappa) ** 2
-
 
 def variance(t: float, kappa: float, sigma: float) -> float:
     """
@@ -68,7 +68,7 @@ def variance(t: float, kappa: float, sigma: float) -> float:
     return 0.5 * sigma ** 2 * G(2 * t, kappa)
 
 
-def zc_bond_volatility(t: float, maturities: np.ndarray, tenor: float, kappa: float, sigma: float) -> np.ndarray:
+def zc_bond_volatility(t: float, maturities: float, tenor: float, kappa: float, sigma: float) -> float:
     """
     Volatility of ZC
 
@@ -86,12 +86,12 @@ def zc_bond_volatility(t: float, maturities: np.ndarray, tenor: float, kappa: fl
         volatility of the short rate
     Returns
     -------
-    np.ndarray.
+    float
     """
     return sigma ** 2 * G(tenor, kappa) ** 2 * G(maturities - t, 2*kappa)
 
 
-def price_zc(x: float, t: float, maturity: np.ndarray, func_spot_zc, kappa: float, sigma: float) -> np.ndarray:
+def price_zc(x: float, t: float, maturity: float, func_spot_zc, kappa: float, sigma: float) -> float:
     """
     ZC price
     Parameters
@@ -115,7 +115,7 @@ def price_zc(x: float, t: float, maturity: np.ndarray, func_spot_zc, kappa: floa
            np.exp(-x * G(maturity - t, kappa) - 0.5 * variance(t, kappa, sigma) * G(maturity - t, kappa) ** 2)
 
 
-def black_tools(x: float, t: float, maturity: np.ndarray, tenor: np.ndarray, strike: np.ndarray, func_spot_zc,
+def black_tools(x: float, t: float, maturity: float, tenor: float, strike: float, func_spot_zc,
                 kappa: float, sigma: float) -> Tuple:
     """
     black tools
@@ -147,24 +147,8 @@ def black_tools(x: float, t: float, maturity: np.ndarray, tenor: np.ndarray, str
     d_negatif = (np.log(p_up / (strike * p_down)) - v / 2) / np.sqrt(v)
     return p_up, p_down, d_positif, d_negatif
 
-
-def price_zc_spot(maturity: float, func_spot_zc):
-    """
-
-    Parameters
-    ----------
-    func_spot_zc
-    maturity : float
-        maturity of the zero coupon
-
-    Returns
-    -------
-        price of a zero coupon
-    """
-    return func_spot_zc(maturity)
-
-def price_zc_call(x: float, t: float, maturity: np.ndarray, tenor: np.ndarray,
-                  strike: np.ndarray, func_spot_zc, kappa: float, sigma: float) -> np.ndarray:
+def price_zc_call(x: float, t: float, maturity: float, tenor: float,
+                  strike: float, func_spot_zc, kappa: float, sigma: float) -> np.ndarray:
     """
     price of call option on ZC
 
@@ -193,8 +177,8 @@ def price_zc_call(x: float, t: float, maturity: np.ndarray, tenor: np.ndarray,
     return p_up * norm.cdf(d_positif) - p_down * strike * norm.cdf(d_negatif)
 
 
-def price_zc_put(x: float, t: float, maturity: np.ndarray,
-                 tenor: np.ndarray, strike: np.ndarray, func_spot_zc,kappa: float, sigma: float) -> np.ndarray:
+def price_zc_put(x: float, t: float, maturity: float,
+                 tenor: float, strike: float, func_spot_zc,kappa, sigma: float) -> np.ndarray:
     """
     price of put option on ZC
 
@@ -223,9 +207,8 @@ def price_zc_put(x: float, t: float, maturity: np.ndarray,
     return p_down * strike * norm.cdf(-d_negatif) - p_up * norm.cdf(-d_positif)
 
 
-@np.vectorize
-def price_swaption(x: float, t: float, array_of_tuple: np.ndarray,
-                   strike: np.ndarray, func_spot_zc, kappa: float, sigma: float, dt: float = 0.5) -> np.ndarray:
+def price_swaption(x: float, t: float, maturity:float, tenor:float,
+                   strike: float, func_spot_zc, kappa: float, sigma: float, dt: float = 0.5) -> float:
     """
     price of swaption
 
@@ -251,49 +234,19 @@ def price_swaption(x: float, t: float, array_of_tuple: np.ndarray,
     np.ndarray.
     """
     # schedule = (t0,t1,...,tN)
-
-    maturity, tenor = array_of_tuple[0], array_of_tuple[1]
     schedule = np.arange(t+maturity, t+maturity+tenor+dt, dt)
-
     solution = optimize.root(x_root_function, 0.05, args=(strike, schedule, func_spot_zc, dt, kappa, sigma))
     optimal_x = solution.x
     vec_k = price_zc(optimal_x, schedule[0], schedule[1:], func_spot_zc, kappa, sigma)
-    return strike * np.sum(dt * price_zc_put(x, t, maturity, schedule[1:] - schedule[0], vec_k, func_spot_zc, kappa,
-           sigma)) + price_zc_put(x, t, maturity, tenor, vec_k[-1], func_spot_zc, kappa, sigma)
+    return strike * np.sum(dt * price_zc_put(x, t, maturity, schedule[1:] - schedule[0], vec_k, func_spot_zc, kappa, sigma)) \
+           + price_zc_put(x, t, maturity, tenor, vec_k[-1], func_spot_zc, kappa, sigma)
 
+price_swaption = np.vectorize(price_swaption, excluded=['func_spot_zc'])
 
 def x_root_function(x, *args):
     strike, schedule, func_spot_zc, vec_dt, kappa, sigma = args
     return -1 + price_zc(x, schedule[0], schedule[-1], func_spot_zc, kappa, sigma) + \
             strike * np.sum(vec_dt * price_zc(x, schedule[0], schedule[1:], func_spot_zc, kappa, sigma))
-
-
-
-
-def compute_model_premiums(ircurve, swaptionsurface, kappa: float, sigma: float, dt: float = 0.5):
-    """
-    Computes premiums premium of the ATM swpations matrix
-    Parameters
-    ----------
-    ircurve : IRCUVE object
-    swaptionsurface : np.array (maturity, tenor, value)
-    kappa
-    sigma
-    dt : float
-        time step convention for the swap
-
-    Returns
-    -------
-
-    """
-    x = 0
-    t = 0
-    premiums_market = swaptionsurface['value'] / 100
-    vect_strike_ATM = ircurve.vect_forward_swap_rate(swaptionsurface, dt)
-    premiums_model = price_swaption(x, t, swaptionsurface, vect_strike_ATM, ircurve.func_zc_prices,
-                                    kappa, sigma, dt)
-
-    return premiums_model, premiums_market
 
 def loss_function(params, *args):
     """
@@ -310,10 +263,11 @@ def loss_function(params, *args):
 
     kappa, sigma = params
     ircurve, swaptionsurface, dt = args
-
-    premiums_model, premiums_mkt = compute_model_premiums(ircurve, swaptionsurface, kappa, sigma, dt)
-
-    return np.mean((premiums_mkt/premiums_model - 1) ** 2)
+    premiums_market = swaptionsurface.prices
+    vect_strike_atm = ircurve.forward_swap_rate(swaptionsurface.expries, swaptionsurface.tenors, dt)
+    premiums_model = price_swaption(0, 0, swaptionsurface.expiries, swaptionsurface.tenors, vect_strike_atm,
+                                    ircurve.func_zc_prices, kappa, sigma, dt)
+    return np.mean((premiums_market/premiums_model - 1) ** 2)
 
 def constraint_func_max_error(params, *args):
     """
@@ -329,9 +283,11 @@ def constraint_func_max_error(params, *args):
     """
     kappa, sigma = params
     max_error, ircurve, swaptionsurface, dt = args
-    premiums_model, premiums_mkt = compute_model_premiums(ircurve, swaptionsurface, kappa, sigma, dt)
-
-    return max_error - np.nanmax((premiums_mkt/premiums_model - 1) ** 2)
+    premiums_market = swaptionsurface.prices
+    vect_strike_atm = ircurve.forward_swap_rate(swaptionsurface.expries, swaptionsurface.tenors, dt)
+    premiums_model = price_swaption(0, 0, swaptionsurface.expiries, swaptionsurface.tenors, vect_strike_atm,
+                                    ircurve.func_zc_prices, kappa, sigma, dt)
+    return max_error - np.nanmax((premiums_market/premiums_model - 1) ** 2)
 
 ########################################################################################################################
 #
@@ -342,7 +298,7 @@ def constraint_func_max_error(params, *args):
 
 class HullWhite(object):
 
-    def __init__(self, kappa: float, sigma: float) -> None:
+    def __init__(self, kappa: float=0.1, sigma: float=0.02) -> None:
         """
         Interest Rates Gaussian 1 Factor model with constant parameters
         Parameters
@@ -376,7 +332,7 @@ class HullWhite(object):
         """
         return self.func_spot_zc(maturity)
 
-    def price_zc(self, x: float, t: float, maturity: np.ndarray) -> np.ndarray:
+    def price_zc(self, x: float, t: float, maturity: float) -> np.ndarray:
         """
         ZC price
         Parameters
@@ -394,8 +350,8 @@ class HullWhite(object):
 
         return price_zc(x, t, maturity, self.func_spot_zc, self.kappa, self.sigma)
 
-    def price_zc_call(self, x: float, t: float, maturity: np.ndarray, tenor: np.ndarray,
-                      strike: np.ndarray) -> np.ndarray:
+    def price_zc_call(self, x: float, t: float, maturity: float, tenor: float,
+                      strike: float) -> np.ndarray:
         """
         price of call option on ZC
 
@@ -418,8 +374,8 @@ class HullWhite(object):
 
         return price_zc_call(x, t, maturity, tenor, strike, self.func_spot_zc, self.kappa, self.sigma)
 
-    def price_zc_put(self, x: float, t: float, maturity: np.ndarray,
-                     tenor: np.ndarray, strike: np.ndarray) -> np.ndarray:
+    def price_zc_put(self, x: float, t: float, maturity: float,
+                     tenor: float, strike: float) -> np.ndarray:
         """
         price of put option on ZC
 
@@ -463,8 +419,7 @@ class HullWhite(object):
         -------
         np.ndarray.
         """
-        array_of_tuple = np.array([(maturity, tenor)],dtype=[("maturity", "i4"), ("tenor", "i4")])
-        return price_swaption(x, t, array_of_tuple, strike, self.func_spot_zc, self.kappa, self.sigma, dt)
+        return price_swaption(x, t, maturity, tenor, strike, self.func_spot_zc, self.kappa, self.sigma, dt)
 
     def simulate(self, number_simulations, horizon, dt, dN):
         """
@@ -482,24 +437,23 @@ class HullWhite(object):
         """
         time_grid = np.arange(0, horizon+dt,dt)
         simulations = np.ndarray((number_simulations, len(time_grid)))
-        simulations[:, 0] = self.init
-        for j in range(1, self.simulations.shape[1]):
+        simulations[:, 0] = 0
+        for j in range(1, simulations.shape[1]):
             simulations[:, j] = simulations[:, j - 1] * exp(-dt * self.kappa) + self.mean(dt) + \
                                 np.sqrt(self.variance(dt)) * dN[:, j]
         return simulations + self.func_instant_forwards(time_grid)
 
-    def fit(self, ircurve, swaptionsurface, bounds, max_error=0.1, n=256, iters=2, minimize_every_iter=True,
+    def fit(self, ircurve, swaptionsurface=None, bounds=None, max_error=0.1, n=256, iters=2, minimize_every_iter=True,
             maxiter=200, dt=0.5):
 
         # calibrates kappa sigma to the data
         self.func_instant_forwards = ircurve.func_instant_forwards
         self.func_spot_zc = ircurve.func_zc_prices
-
-        constraints = [{'type': 'ineq', 'fun': constraint_func_max_error, 'args': (max_error, ircurve, swaptionsurface, dt)}]
-        params = shgo(loss_function, bounds=bounds, n=n, iters=iters, minimizer_kwargs={'constraints': constraints},
-                      sampling_method='sobol', options={'minimize_every_iter': minimize_every_iter},
-                      args=(ircurve, swaptionsurface, dt))
-
-        self.kappa, self.sigma = params.x
-
+        params=None
+        if swaptionsurface is not None:
+            constraints = [{'type': 'ineq', 'fun': constraint_func_max_error, 'args': (max_error, ircurve, swaptionsurface, dt)}]
+            params = shgo(loss_function, bounds=bounds, n=n, iters=iters, minimizer_kwargs={'constraints': constraints},
+                          sampling_method='sobol', options={'minimize_every_iter': minimize_every_iter},
+                          args=(ircurve, swaptionsurface, dt))
+            self.kappa, self.sigma = params.x
         return params

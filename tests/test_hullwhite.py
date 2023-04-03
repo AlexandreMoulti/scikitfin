@@ -1,11 +1,10 @@
 from scikitfin.markets import InterestRateCurve
-from scikitfin.markets import ircurve
-from scikitfin.models import HullWhite, hullwhite
+from scikitfin.models import HullWhite
+from scikitfin.markets import SwaptionSurface
 import numpy as np
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
 import pandas as pd
-from swaptionprice import array_of_tuple
+from numpy.testing import assert_array_almost_equal
+
 
 def test_zc_price():
     """
@@ -22,14 +21,10 @@ def test_zc_price():
     t = 0
     kappa = 0.1
     sigma = 0.01
-
-    spot_prices = []
-    new_spot_prices = []
-    for mat in maturities:
-        spot_prices.append(hullwhite.price_zc_spot(mat, irc.func_zc_prices))
-        new_spot_prices.append(hullwhite.price_zc(x, t, mat, irc.func_zc_prices, kappa, sigma))
-
-    assert_array_almost_equal(spot_prices, new_spot_prices)
+    hw = HullWhite(kappa, sigma)
+    hw.fit(irc)
+    new_spot_prices = hw.price_zc_spot(maturities)
+    assert_array_almost_equal(irc.zc_prices, new_spot_prices)
 
 
 def test_zc_call():
@@ -47,14 +42,16 @@ def test_zc_call():
     t = 0
     kappa = 0.1
     sigma = 0.01
-
+    hw=HullWhite(kappa, sigma)
+    hw.fit(irc)
     premia_prices = [0.456542, 0.428708, 0.133566, 0.050064, 0.404916, 0.380230, 0.119513, 0.053572]
     hw_prices = []
     strike = 0.5
 
     for expiry in [1, 5]:
         for tenor in [1, 2, 15, 20]:
-            hw_prices.append(hullwhite.price_zc_call(x, t, expiry, tenor, strike, irc.func_zc_prices, kappa, sigma))
+            hw_prices.append(hw.price_zc_call(x, t, expiry, tenor, strike))
+
     assert_array_almost_equal(premia_prices, hw_prices)
 
 
@@ -75,12 +72,13 @@ def test_call_parity():
     t = 0
     kappa = 0.1
     sigma = 0.01
+    hw=HullWhite(kappa, sigma)
+    hw.fit(irc)
+    zbc_prices = hw.price_zc_call(x, t, maturities, tenor, strike)
+    zbp_prices = hw.price_zc_put(x, t, maturities, tenor, strike)
 
-    zbc_prices = hullwhite.price_zc_call(x, t, maturities, tenor, strike, irc.func_zc_prices, kappa, sigma)
-    zbp_prices = hullwhite.price_zc_put(x, t, maturities, tenor, strike, irc.func_zc_prices, kappa, sigma)
-
-    assert_array_almost_equal(zbc_prices + strike * hullwhite.price_zc(x, t, maturities, irc.func_zc_prices, kappa, sigma),
-                              zbp_prices + hullwhite.price_zc(x, t, maturities + tenor, irc.func_zc_prices, kappa, sigma))
+    assert_array_almost_equal(zbc_prices + strike * hw.price_zc(x, t, maturities),
+                              zbp_prices + hw.price_zc(x, t, maturities + tenor))
 
 
 def test_fit_method():
@@ -90,21 +88,18 @@ def test_fit_method():
     -------
 
     """
-
-    swaptionsurface = array_of_tuple
     bounds = [(0, 10), (0,10)]
+    expiry, tenor = 1, 30
     data_curve = pd.read_csv("courbe.csv")
     maturities = data_curve['maturity'].to_numpy()
     discounts = data_curve['Discount'].to_numpy()
     irc = InterestRateCurve(maturities, discounts, 'ZeroCoupon')
-    kappa = 0.1
-    sigma = 0.01
-    hw = HullWhite(kappa, sigma)
-    a = hullwhite.price_swaption(0, 0, np.array([(1, 30, 0.2)], dtype=[("maturity", "i4"), ("tenor", "i4"), ("value", "f8")])
-                                 , 0.02, irc.func_zc_prices, kappa, sigma)
+    swaptionsurface = SwaptionSurface(irc, expiry, tenor, 0.02, mode='vol')
 
+    hw = HullWhite()
+
+    strike=irc.forward_swap_rate(expiry, tenor)
     hw.fit(irc, swaptionsurface, bounds)
-
-    b, c = hullwhite.compute_model_premiums(irc, swaptionsurface, hw.kappa, hw.sigma)
+    model_prices = hw.price_swaption(0, 0, expiry, tenor, strike)
     print(hw.kappa, hw.sigma)
-    assert_array_almost_equal(b, c)
+    assert_array_almost_equal(swaptionsurface.prices, model_prices)
