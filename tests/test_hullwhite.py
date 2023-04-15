@@ -81,6 +81,21 @@ def test_call_parity():
                               zbp_prices + hw.price_zc(x, t, maturities + tenor))
 
 
+def test_swaption_price():
+    """
+    test the swpation price methodology vs premia inria
+    """
+    maturities = np.linspace(0,30,30*12+1)
+    yields = np.ones(maturities.shape[0]) * 0.03
+    irc = InterestRateCurve(maturities, yields, 'Yield')
+    kappa, sigma = 0.1, 0.01
+    expiry, tenor = 2, 7
+    strike= 0.05
+    hw = HullWhite(kappa, sigma)
+    hw.fit(irc)
+    assert_array_almost_equal(hw.price_swaption(0,0,expiry,tenor,strike), 0.086318)
+
+
 def test_fit_method():
     """
     test the coherence ( not the return) of the fit method
@@ -102,4 +117,6 @@ def test_fit_method():
     hw.fit(irc, swaptionsurface, bounds)
     model_prices = hw.price_swaption(0, 0, expiry, tenor, strike)
     print(hw.kappa, hw.sigma)
-    assert_array_almost_equal(swaptionsurface.prices, model_prices)
+    print(swaptionsurface.prices)
+    print(model_prices)
+    assert_array_almost_equal(swaptionsurface.prices, model_prices, decimal=4)

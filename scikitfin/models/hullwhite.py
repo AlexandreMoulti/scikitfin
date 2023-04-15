@@ -1,7 +1,5 @@
 import numpy as np
-import pandas as pd
-from scipy import interpolate
-import matplotlib.pyplot as plt
+from numpy.typing import ArrayLike, NDArray
 from typing import Literal, Union, List, Any, Tuple, Callable
 from math import *
 from scipy.stats import norm
@@ -14,35 +12,44 @@ from scipy.optimize import shgo
 #
 ########################################################################################################################
 
-@np.vectorize
-def G(tau: float, kappa: float) -> float:
+
+def G(tau: ArrayLike,
+      kappa: ArrayLike
+      ) -> float:
     """
     function used to compute ZC prices
     Parameters
     ----------
     tau : np.ndarray
         time steps.
-    kappa : float
+    kappa : ArrayLike
         parameters of the model.
     Returns
     -------
     np.ndarray.
     """
-    return 1e-10 if tau < 1e-10 else (1 - np.exp(-kappa * tau)) / kappa
+    if np.isscalar(tau):
+        return tau if kappa*tau < 1e-10 else (1 - exp(-kappa * tau)) / kappa
+    else:
+        return np.where(kappa*tau < 1e-10, tau, (1 - np.exp(-kappa * tau)) / kappa)
 
 
-def mean(t: float, x: float, kappa: float, sigma: float) -> float:
+def mean(t: ArrayLike,
+         x: ArrayLike,
+         kappa: ArrayLike,
+         sigma: ArrayLike
+         ) -> ArrayLike:
     """
     Mean of the stochastic process x
     Parameters
     ----------
-    t : float
+    t : ArrayLike
         current time.
-    x : float
+    x : ArrayLike
         stochastic process x ( x = r - f )
-    kappa : float
+    kappa : ArrayLike
         parameters of the model.
-    sigma : float
+    sigma : ArrayLike
         volatility of the short rate
     Returns
     -------
@@ -50,62 +57,74 @@ def mean(t: float, x: float, kappa: float, sigma: float) -> float:
     """
     return x * np.exp(-kappa * t) + 0.5 * sigma ** 2 * G(t, kappa) ** 2
 
-def variance(t: float, kappa: float, sigma: float) -> float:
+def variance(t: ArrayLike,
+             kappa: ArrayLike,
+             sigma: ArrayLike
+             ) -> ArrayLike:
     """
     The variance of the stochastic process x
     Parameters
     ----------
-    t : float
+    t : ArrayLike
         current time.
-    kappa : float
+    kappa : ArrayLike
         parameters of the model.
-    sigma : float
+    sigma : ArrayLike
         volatility of the short rate
     Returns
     -------
-    float.
+    ArrayLike.
     """
     return 0.5 * sigma ** 2 * G(2 * t, kappa)
 
 
-def zc_bond_volatility(t: float, maturities: float, tenor: float, kappa: float, sigma: float) -> float:
+def zc_bond_volatility(t: ArrayLike,
+                       maturities: ArrayLike,
+                       tenor: ArrayLike,
+                       kappa: ArrayLike,
+                       sigma: ArrayLike) -> ArrayLike:
     """
     Volatility of ZC
 
     Parameters
     ----------
-    t : float
+    t : ArrayLike
         current time.
     maturities : np.ndarray
         expiry of the ZC bond
-    tenor : float
+    tenor : ArrayLike
         tenor of the underlying
-    kappa : float
+    kappa : ArrayLike
         parameters of the model.
-    sigma : float
+    sigma : ArrayLike
         volatility of the short rate
     Returns
     -------
-    float
+    ArrayLike
     """
     return sigma ** 2 * G(tenor, kappa) ** 2 * G(maturities - t, 2*kappa)
 
 
-def price_zc(x: float, t: float, maturity: float, func_spot_zc, kappa: float, sigma: float) -> float:
+def price_zc(x: ArrayLike,
+             t: ArrayLike,
+             maturity: ArrayLike,
+             func_spot_zc,
+             kappa: ArrayLike,
+             sigma: ArrayLike) -> ArrayLike:
     """
     ZC price
     Parameters
     ----------
-    x : float
+    x : ArrayLike
         stochastic process x ( x = r - f )
-    t : float
+    t : ArrayLike
         current time.
     maturity : np.ndarray
         expiry of the ZC bond
     func_spot_zc : function that spot ZC prices
-    kappa : float
+    kappa : ArrayLike
         parameters of the model.
-    sigma : float
+    sigma : ArrayLike
         volatility of the ZC
     Returns
     -------
@@ -115,15 +134,22 @@ def price_zc(x: float, t: float, maturity: float, func_spot_zc, kappa: float, si
            np.exp(-x * G(maturity - t, kappa) - 0.5 * variance(t, kappa, sigma) * G(maturity - t, kappa) ** 2)
 
 
-def black_tools(x: float, t: float, maturity: float, tenor: float, strike: float, func_spot_zc,
-                kappa: float, sigma: float) -> Tuple:
+def black_tools(x: ArrayLike,
+                t: ArrayLike,
+                maturity: ArrayLike,
+                tenor: ArrayLike,
+                strike: ArrayLike,
+                func_spot_zc,
+                kappa: ArrayLike,
+                sigma: ArrayLike
+                ) -> Tuple:
     """
     black tools
     Parameters
     ----------
-    x : float
+    x : ArrayLike
         stochastic process x ( x = r - f )
-    t : float
+    t : ArrayLike
         current time.
     maturity: np.ndarray
         expiry of the option
@@ -132,9 +158,9 @@ def black_tools(x: float, t: float, maturity: float, tenor: float, strike: float
     strike : np.ndarray
         strike of the option
     func_spot_zc : function that spot ZC prices
-    kappa : float
+    kappa : ArrayLike
         parameters of the model.
-    sigma : float
+    sigma : ArrayLike
         volatility of the short rate
     Returns
     -------
@@ -147,16 +173,23 @@ def black_tools(x: float, t: float, maturity: float, tenor: float, strike: float
     d_negatif = (np.log(p_up / (strike * p_down)) - v / 2) / np.sqrt(v)
     return p_up, p_down, d_positif, d_negatif
 
-def price_zc_call(x: float, t: float, maturity: float, tenor: float,
-                  strike: float, func_spot_zc, kappa: float, sigma: float) -> np.ndarray:
+def price_zc_call(x: ArrayLike,
+                  t: ArrayLike,
+                  maturity: ArrayLike,
+                  tenor: ArrayLike,
+                  strike: ArrayLike,
+                  func_spot_zc,
+                  kappa: ArrayLike,
+                  sigma: ArrayLike
+                  ) -> np.ndarray:
     """
     price of call option on ZC
 
     Parameters
     ----------
-    x : float
+    x : ArrayLike
         stochastic process x ( x = r - f )
-    t : float
+    t : ArrayLike
         current time.
     maturity: np.ndarray
         expiry of the option
@@ -165,9 +198,9 @@ def price_zc_call(x: float, t: float, maturity: float, tenor: float,
     strike : np.ndarray
         strike of the option
     func_spot_zc : function that spot ZC prices
-    kappa : float
+    kappa : ArrayLike
         parameters of the model.
-    sigma : float
+    sigma : ArrayLike
         volatility of the short rate
     Returns
     -------
@@ -177,16 +210,23 @@ def price_zc_call(x: float, t: float, maturity: float, tenor: float,
     return p_up * norm.cdf(d_positif) - p_down * strike * norm.cdf(d_negatif)
 
 
-def price_zc_put(x: float, t: float, maturity: float,
-                 tenor: float, strike: float, func_spot_zc,kappa, sigma: float) -> np.ndarray:
+def price_zc_put(x: ArrayLike,
+                 t: ArrayLike,
+                 maturity: ArrayLike,
+                 tenor: ArrayLike,
+                 strike: ArrayLike,
+                 func_spot_zc,
+                 kappa: ArrayLike,
+                 sigma: ArrayLike
+                 ) -> np.ndarray:
     """
     price of put option on ZC
 
     Parameters
     ----------
-    x : float
+    x : ArrayLike
         stochastic process x ( x = r - f )
-    t : float
+    t : ArrayLike
         current time.@
     maturity: np.ndarray
         expiry of the option
@@ -195,9 +235,9 @@ def price_zc_put(x: float, t: float, maturity: float,
     strike : np.ndarray
         strike of the option
     func_spot_zc : function that spot ZC prices
-    kappa : float
+    kappa : ArrayLike
         parameters of the model.
-    sigma : float
+    sigma : ArrayLike
         volatility of the short rate
     Returns
     -------
@@ -207,27 +247,35 @@ def price_zc_put(x: float, t: float, maturity: float,
     return p_down * strike * norm.cdf(-d_negatif) - p_up * norm.cdf(-d_positif)
 
 
-def price_swaption(x: float, t: float, maturity:float, tenor:float,
-                   strike: float, func_spot_zc, kappa: float, sigma: float, dt: float = 0.5) -> float:
+def price_swaption(x: ArrayLike,
+                   t: ArrayLike,
+                   maturity: ArrayLike,
+                   tenor:ArrayLike,
+                   strike: ArrayLike,
+                   func_spot_zc,
+                   kappa: ArrayLike,
+                   sigma: ArrayLike,
+                   dt: ArrayLike = 0.5
+                   ) -> ArrayLike:
     """
     price of swaption
 
     Parameters
     ----------
-    x : float
+    x : ArrayLike
         state process x at current time t
-    t : float
+    t : ArrayLike
         current time.
     array_of_tuple: np.ndarray
         list of tuple (maturity, tenor).
     strike: np.ndarray
         list of strike of the option.
     func_spot_zc : function that spot ZC prices
-    kappa : float
+    kappa : ArrayLike
         parameters of the model.
-    sigma : float
+    sigma : ArrayLike
         volatility of the short rate
-    dt : float
+    dt : ArrayLike
         time step convention for the swap
     Returns
     -------
@@ -264,7 +312,7 @@ def loss_function(params, *args):
     kappa, sigma = params
     ircurve, swaptionsurface, dt = args
     premiums_market = swaptionsurface.prices
-    vect_strike_atm = ircurve.forward_swap_rate(swaptionsurface.expries, swaptionsurface.tenors, dt)
+    vect_strike_atm = ircurve.forward_swap_rate(swaptionsurface.expiries, swaptionsurface.tenors, dt)
     premiums_model = price_swaption(0, 0, swaptionsurface.expiries, swaptionsurface.tenors, vect_strike_atm,
                                     ircurve.func_zc_prices, kappa, sigma, dt)
     return np.mean((premiums_market/premiums_model - 1) ** 2)
@@ -284,7 +332,7 @@ def constraint_func_max_error(params, *args):
     kappa, sigma = params
     max_error, ircurve, swaptionsurface, dt = args
     premiums_market = swaptionsurface.prices
-    vect_strike_atm = ircurve.forward_swap_rate(swaptionsurface.expries, swaptionsurface.tenors, dt)
+    vect_strike_atm = ircurve.forward_swap_rate(swaptionsurface.expiries, swaptionsurface.tenors, dt)
     premiums_model = price_swaption(0, 0, swaptionsurface.expiries, swaptionsurface.tenors, vect_strike_atm,
                                     ircurve.func_zc_prices, kappa, sigma, dt)
     return max_error - np.nanmax((premiums_market/premiums_model - 1) ** 2)
@@ -298,7 +346,7 @@ def constraint_func_max_error(params, *args):
 
 class HullWhite(object):
 
-    def __init__(self, kappa: float=0.1, sigma: float=0.02) -> None:
+    def __init__(self, kappa: ArrayLike=0.1, sigma: ArrayLike=0.02) -> None:
         """
         Interest Rates Gaussian 1 Factor model with constant parameters
         Parameters
@@ -318,12 +366,12 @@ class HullWhite(object):
         self.func_instant_forwards = lambda x: 0
         self.func_spot_zc = lambda x: 1
 
-    def price_zc_spot(self, maturity: float):
+    def price_zc_spot(self, maturity: ArrayLike):
         """
 
         Parameters
         ----------
-        maturity : float
+        maturity : ArrayLike
             maturity of the zero coupon
 
         Returns
@@ -332,14 +380,14 @@ class HullWhite(object):
         """
         return self.func_spot_zc(maturity)
 
-    def price_zc(self, x: float, t: float, maturity: float) -> np.ndarray:
+    def price_zc(self, x: ArrayLike, t: ArrayLike, maturity: ArrayLike) -> np.ndarray:
         """
         ZC price
         Parameters
         ----------
-        x : float
+        x : ArrayLike
             stochastic process x ( x = r - f )
-        t : float
+        t : ArrayLike
             current time.
         maturity : np.ndarray
             expiry of the ZC bond
@@ -350,16 +398,16 @@ class HullWhite(object):
 
         return price_zc(x, t, maturity, self.func_spot_zc, self.kappa, self.sigma)
 
-    def price_zc_call(self, x: float, t: float, maturity: float, tenor: float,
-                      strike: float) -> np.ndarray:
+    def price_zc_call(self, x: ArrayLike, t: ArrayLike, maturity: ArrayLike, tenor: ArrayLike,
+                      strike: ArrayLike) -> np.ndarray:
         """
         price of call option on ZC
 
         Parameters
         ----------
-        x : float
+        x : ArrayLike
             stochastic process x ( x = r - f )
-        t : float
+        t : ArrayLike
             current time.
         maturity: np.ndarray
             expiry of the option
@@ -374,16 +422,16 @@ class HullWhite(object):
 
         return price_zc_call(x, t, maturity, tenor, strike, self.func_spot_zc, self.kappa, self.sigma)
 
-    def price_zc_put(self, x: float, t: float, maturity: float,
-                     tenor: float, strike: float) -> np.ndarray:
+    def price_zc_put(self, x: ArrayLike, t: ArrayLike, maturity: ArrayLike,
+                     tenor: ArrayLike, strike: ArrayLike) -> np.ndarray:
         """
         price of put option on ZC
 
         Parameters
         ----------
-        x : float
+        x : ArrayLike
             stochastic process x ( x = r - f )
-        t : float
+        t : ArrayLike
             current time.@
         maturity: np.ndarray
             expiry of the option
@@ -398,22 +446,22 @@ class HullWhite(object):
 
         return price_zc_put(x, t, maturity, tenor, strike, self.func_spot_zc, self.kappa, self.sigma)
 
-    def price_swaption(self, x: float, t: float, maturity: float, tenor: float,
-                       strike: float, dt: float = 0.5) -> float:
+    def price_swaption(self, x: ArrayLike, t: ArrayLike, maturity: ArrayLike, tenor: ArrayLike,
+                       strike: ArrayLike, dt: ArrayLike = 0.5) -> ArrayLike:
         """
         price of swaption
 
         Parameters
         ----------
-        x : float
+        x : ArrayLike
             state process x at current time t
-        t : float
+        t : ArrayLike
             current time.
-        maturity : float
-        tenor : float
-        strike: float
+        maturity : ArrayLike
+        tenor : ArrayLike
+        strike: ArrayLike
             strike of the option.
-        dt : float
+        dt : ArrayLike
             time step convention for the swap
         Returns
         -------

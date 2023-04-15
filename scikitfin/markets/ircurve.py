@@ -195,7 +195,7 @@ def forward_swap_rate(expiry:float, tenor:float, func_zc_prices, dt: float = 0.5
     """
     maturities = np.arange(expiry + dt, expiry + tenor + dt, dt)
     annuity_factor = np.sum(dt * func_zc_prices(maturities))
-    swap_rate = (func_zc_prices(expiry) - func_zc_prices(tenor + expiry)) / annuity_factor
+    return (func_zc_prices(expiry) - func_zc_prices(tenor + expiry)) / annuity_factor
 
 forward_swap_rate = np.vectorize(forward_swap_rate, excluded=['func_zc_prices'])
 
