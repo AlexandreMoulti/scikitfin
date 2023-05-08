@@ -491,17 +491,15 @@ class HullWhite(object):
                                 np.sqrt(self.variance(dt)) * dN[:, j]
         return simulations + self.func_instant_forwards(time_grid)
 
-    def fit(self, ircurve, swaptionsurface=None, bounds=None, max_error=0.1, n=256, iters=2, minimize_every_iter=True,
-            maxiter=200, dt=0.5):
+    def fit(self, ircurve, swaptionsurface=None, params=None, bounds=None, dt=0.5):
 
         # calibrates kappa sigma to the data
         self.func_instant_forwards = ircurve.func_instant_forwards
         self.func_spot_zc = ircurve.func_zc_prices
-        params=None
+
         if swaptionsurface is not None:
-            constraints = [{'type': 'ineq', 'fun': constraint_func_max_error, 'args': (max_error, ircurve, swaptionsurface, dt)}]
-            params = shgo(loss_function, bounds=bounds, n=n, iters=iters, minimizer_kwargs={'constraints': constraints},
-                          sampling_method='sobol', options={'minimize_every_iter': minimize_every_iter},
-                          args=(ircurve, swaptionsurface, dt))
+            params = optimize.minimize(loss_function, params, method='SLSQP', bounds=bounds,
+                                       options={"maxiter": 100, 'ftol': 5e-6},
+                                       args=(ircurve, swaptionsurface, dt))
             self.kappa, self.sigma = params.x
         return params

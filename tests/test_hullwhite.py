@@ -4,7 +4,7 @@ from scikitfin.markets import SwaptionSurface
 import numpy as np
 import pandas as pd
 from numpy.testing import assert_array_almost_equal
-
+import QuantLib as ql
 
 def test_zc_price():
     """
@@ -83,17 +83,89 @@ def test_call_parity():
 
 def test_swaption_price():
     """
-    test the swpation price methodology vs premia inria
+    test the swpation price methodology vs quantlib
     """
-    maturities = np.linspace(0,30,30*12+1)
-    yields = np.ones(maturities.shape[0]) * 0.03
-    irc = InterestRateCurve(maturities, yields, 'Yield')
-    kappa, sigma = 0.1, 0.01
-    expiry, tenor = 2, 7
-    strike= 0.05
+    data_curve = pd.read_csv("courbe_1.csv")
+    maturities = data_curve['maturity'].astype(int).to_list()
+    discounts = data_curve['Discount'].to_list()
+    yields = np.ones(len(maturities)) * 0.03
+    irc = InterestRateCurve(np.array(maturities), yields, 'Yield')
+    #irc = InterestRateCurve(maturities, discounts, 'ZeroCoupon')
+
+    #### QUantLib
+
+    tradeDate = ql.Date(25, 4, 2023)
+    ql.Settings.instance().evaluationDate = tradeDate
+
+    spot_dates = [tradeDate + ql.Period(i, ql.Years) for i in maturities]
+    day_count = ql.Actual360()
+    calendar = ql.France()
+    interpolation = ql.Linear()
+    compounding = ql.Compounded
+    compounding_frequency = ql.Annual
+    spot_curve = ql.ZeroCurve(spot_dates,
+                              yields,
+                              day_count,
+                              calendar,
+                              interpolation,
+                              compounding,
+                              compounding_frequency)
+    #spot_curve = ql.FlatForward(tradeDate, ql.QuoteHandle(ql.SimpleQuote(0.03)), ql.Actual360(), ql.Compounded, ql.Annual)
+    term_structure = ql.YieldTermStructureHandle(spot_curve)
+    index = ql.EURLibor6M(term_structure)
+
+    false_vols = [0.3] * 15
+
+    fixed_leg_tenor = ql.Period(6, ql.Months)
+    fixed_leg_daycounter = ql.Actual360()
+    floating_leg_daycounter = ql.Actual360()
+
+    #### internal models parameters
+    kappa = 0.1
+    sigma = 0.02
     hw = HullWhite(kappa, sigma)
     hw.fit(irc)
-    assert_array_almost_equal(hw.price_swaption(0,0,expiry,tenor,strike), 0.086318)
+    swpations_prices = []
+    swpations_helpers = []
+
+    model = ql.HullWhite(term_structure, kappa, sigma)
+    engine = ql.JamshidianSwaptionEngine(model)
+    method = ql.LevenbergMarquardt()
+    for i, vol in enumerate(false_vols):
+        expiry = i + 1
+        tenor = len(false_vols) - i
+        quote_vol = ql.QuoteHandle(ql.SimpleQuote(vol))
+        strike_atm = float(irc.forward_swap_rate(expiry, tenor))
+        helper = ql.SwaptionHelper(ql.Period(expiry, ql.Years),
+                                   ql.Period(tenor, ql.Years),
+                                   quote_vol,
+                                   index,
+                                   fixed_leg_tenor,
+                                   fixed_leg_daycounter,
+                                   floating_leg_daycounter,
+                                   term_structure,
+                                   ql.BlackCalibrationHelper.RelativePriceError,
+                                   strike_atm,
+                                   1,
+                                   ql.Normal,
+                                   0)
+        helper.setPricingEngine(engine)
+        swpations_helpers.append(helper)
+        prices = hw.price_swaption(0, 0, expiry, tenor, strike_atm)
+        swpations_prices.append(prices)
+
+    fixedParameters = [False, True]
+    endCriteria = ql.EndCriteria(10000, 100, 0.000001, 0.00000001, 0.00000001)
+    model.calibrate(swpations_helpers, method, endCriteria,
+                    ql.BoundaryConstraint(0, 0), [], fixedParameters)
+
+    swaptions_qt_prices = []
+
+    for swpt in swpations_helpers:
+        swaptions_qt_prices.append(swpt.modelValue())
+
+    assert_array_almost_equal(swaptions_qt_prices, swpations_prices, decimal=2)
+
 
 
 def test_fit_method():
@@ -113,10 +185,7 @@ def test_fit_method():
 
     hw = HullWhite()
 
-    strike=irc.forward_swap_rate(expiry, tenor)
+    strike = irc.forward_swap_rate(expiry, tenor)
     hw.fit(irc, swaptionsurface, bounds)
     model_prices = hw.price_swaption(0, 0, expiry, tenor, strike)
-    print(hw.kappa, hw.sigma)
-    print(swaptionsurface.prices)
-    print(model_prices)
     assert_array_almost_equal(swaptionsurface.prices, model_prices, decimal=4)
