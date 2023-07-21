@@ -59,6 +59,13 @@ Then the Jamishidian trick gives us the following formula :
 $$V(T_0) = \left[ K_N - P(T_0,T_N,x_{T_0}) \right]^+ + c \sum_1^N \tau_i \left[ K_i-P(T_0,T_i,x_{T_0}) \right]^+$$
 
 ### Swaptions 2: approximate formula for fast calibration
+The payoff of a swaption can be written as $$V_swaption = A(T_0) \left( S_{T_0}-K\right)^+$$
+Using the level measure, we get the following formulation :
+
+$$ V_swaption(T_0,T_1,T_N,K)=A(T_0,T_1,T_N) \left[ \left(S(T_0,T_1,T_N)-K \right) \Phi(d) + \sqrt(v) \phi(d) \right]$$
+where 
+$$ d=\frac{S-K}{\sqrt(v)}$$
+$$ v=\int_0^{T_0} q(t, x(t))^2 \sigma_r(t)^2 dt$$
 
 # Application to the constant case
 
