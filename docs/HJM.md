@@ -23,7 +23,7 @@ The dynamic of the zero-coupon bonds becomes:
 $$\frac{dP(t,T)}{P(t,T)} = (r_t - M(t,T) + \frac{1}{2} \Sigma(t,T)\Sigma(t,T)^\top)dt - \Sigma(t,T) dW_t$$
 
 Knowing from the arbitrage-free condition, we get that $\frac{P}{\beta}$ shoud be a Q-martingale and thus $M(t,T)=\frac{1}{2} \Sigma(t,T)\Sigma(t,T)^\top$. Differentiating this last equation, we get :
-$$\mu(t,T) = \sigma(t,T) \int_t^T \sigma(t,u) du$$
+$$\mu(t,T) = \sigma(t,T) \int_t^T \sigma(t,u)^\top du$$
 
 ____
 This leads to the main equation of the HJM framework, which describes the evolution of the forwards depending only on the volatility functions:
