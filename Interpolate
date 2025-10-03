@@ -1,15 +1,17 @@
 Function Interpolate(x As Double, xRange As Range, yRange As Range) As Variant
     ' Linear interpolation function that works with negative values
+    ' Automatically sorts xRange in ascending order and reorders yRange accordingly
     ' x: The value to interpolate for
-    ' xRange: Range containing x values (must be sorted ascending)
+    ' xRange: Range containing x values (will be sorted)
     ' yRange: Range containing corresponding y values
     
-    Dim i As Long
+    Dim i As Long, j As Long
     Dim n As Long
     Dim xVal() As Double
     Dim yVal() As Double
     Dim x1 As Double, x2 As Double
     Dim y1 As Double, y2 As Double
+    Dim temp As Double
     
     ' Check if ranges have same size
     If xRange.Cells.Count <> yRange.Cells.Count Then
@@ -38,6 +40,22 @@ Function Interpolate(x As Double, xRange As Range, yRange As Range) As Variant
             Interpolate = CVErr(xlErrNA)
             Exit Function
         End If
+    Next i
+    
+    ' Sort xVal and yVal together using bubble sort
+    For i = 1 To n - 1
+        For j = i + 1 To n
+            If xVal(i) > xVal(j) Then
+                ' Swap x values
+                temp = xVal(i)
+                xVal(i) = xVal(j)
+                xVal(j) = temp
+                ' Swap corresponding y values
+                temp = yVal(i)
+                yVal(i) = yVal(j)
+                yVal(j) = temp
+            End If
+        Next j
     Next i
     
     ' Check if x is outside the range (extrapolation)
