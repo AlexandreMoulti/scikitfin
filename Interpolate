@@ -1,0 +1,80 @@
+Function Interpolate(x As Double, xRange As Range, yRange As Range) As Variant
+    ' Linear interpolation function that works with negative values
+    ' x: The value to interpolate for
+    ' xRange: Range containing x values (must be sorted ascending)
+    ' yRange: Range containing corresponding y values
+    
+    Dim i As Long
+    Dim n As Long
+    Dim xVal() As Double
+    Dim yVal() As Double
+    Dim x1 As Double, x2 As Double
+    Dim y1 As Double, y2 As Double
+    
+    ' Check if ranges have same size
+    If xRange.Cells.Count <> yRange.Cells.Count Then
+        Interpolate = CVErr(xlErrNA)
+        Exit Function
+    End If
+    
+    ' Get number of data points
+    n = xRange.Cells.Count
+    
+    ' Check for minimum data points
+    If n < 2 Then
+        Interpolate = CVErr(xlErrNA)
+        Exit Function
+    End If
+    
+    ' Load data into arrays
+    ReDim xVal(1 To n)
+    ReDim yVal(1 To n)
+    
+    For i = 1 To n
+        If IsNumeric(xRange.Cells(i).Value) And IsNumeric(yRange.Cells(i).Value) Then
+            xVal(i) = xRange.Cells(i).Value
+            yVal(i) = yRange.Cells(i).Value
+        Else
+            Interpolate = CVErr(xlErrNA)
+            Exit Function
+        End If
+    Next i
+    
+    ' Check if x is outside the range (extrapolation)
+    If x <= xVal(1) Then
+        ' Use first two points for extrapolation
+        x1 = xVal(1)
+        x2 = xVal(2)
+        y1 = yVal(1)
+        y2 = yVal(2)
+        Interpolate = y1 + (y2 - y1) * (x - x1) / (x2 - x1)
+        Exit Function
+    End If
+    
+    If x >= xVal(n) Then
+        ' Use last two points for extrapolation
+        x1 = xVal(n - 1)
+        x2 = xVal(n)
+        y1 = yVal(n - 1)
+        y2 = yVal(n)
+        Interpolate = y1 + (y2 - y1) * (x - x1) / (x2 - x1)
+        Exit Function
+    End If
+    
+    ' Find the interval containing x
+    For i = 1 To n - 1
+        If x >= xVal(i) And x <= xVal(i + 1) Then
+            x1 = xVal(i)
+            x2 = xVal(i + 1)
+            y1 = yVal(i)
+            y2 = yVal(i + 1)
+            
+            ' Linear interpolation formula
+            Interpolate = y1 + (y2 - y1) * (x - x1) / (x2 - x1)
+            Exit Function
+        End If
+    Next i
+    
+    ' If we get here, something went wrong
+    Interpolate = CVErr(xlErrNA)
+End Function
